@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Trash2, Eye } from "lucide-react";
+import { Plus, Trash2, Eye, Send } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { PageHeader } from "~/components/shared/PageHeader";
@@ -8,7 +8,7 @@ import { ListCard } from "~/components/shared/ListCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
 import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
-import { useInvoices, useDeleteInvoice } from "~/hooks/useInvoices";
+import { useInvoices, useDeleteInvoice, useSendInvoice } from "~/hooks/useInvoices";
 import { useClients } from "~/hooks/useClients";
 import { formatCurrency } from "~/lib/currency";
 import { toast } from "sonner";
@@ -22,9 +22,24 @@ function InvoicesPage() {
   const { data: invoices, isLoading } = useInvoices(user.$id);
   const { data: clients } = useClients(user.$id);
   const deleteInvoice = useDeleteInvoice();
+  const sendInvoice = useSendInvoice();
 
   function clientName(clientId: string) {
     return clients?.find((c) => c.$id === clientId)?.name ?? "Unknown";
+  }
+
+  function clientEmail(clientId: string) {
+    return clients?.find((c) => c.$id === clientId)?.email ?? "";
+  }
+
+  function handleSend(invoiceId: string) {
+    sendInvoice.mutate(
+      { invoiceId, userId: user.$id },
+      {
+        onSuccess: () => toast.success("Invoice sent"),
+        onError: (err) => toast.error((err as Error).message || "Failed to send invoice"),
+      }
+    );
   }
 
   function getDisplayStatus(inv: { status: string; due_date: string }) {
@@ -72,20 +87,35 @@ function InvoicesPage() {
                 trailing={formatCurrency(inv.total, inv.currency)}
                 actions={
                   inv.status === "draft" ? (
-                    <ConfirmDialog
-                      trigger={
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      }
-                      title="Delete invoice?"
-                      description={`Delete ${inv.invoice_number}? This cannot be undone.`}
-                      onConfirm={() =>
-                        deleteInvoice.mutate(inv.$id, {
-                          onSuccess: () => toast.success("Invoice deleted"),
-                        })
-                      }
-                    />
+                    <>
+                      {clientEmail(inv.client_id) && (
+                        <ConfirmDialog
+                          trigger={
+                            <Button variant="ghost" size="icon" disabled={sendInvoice.isPending}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          }
+                          title={`Send invoice ${inv.invoice_number}?`}
+                          description={`Email it to ${clientEmail(inv.client_id)} and mark as sent.`}
+                          actionLabel="Send"
+                          onConfirm={() => handleSend(inv.$id)}
+                        />
+                      )}
+                      <ConfirmDialog
+                        trigger={
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        }
+                        title="Delete invoice?"
+                        description={`Delete ${inv.invoice_number}? This cannot be undone.`}
+                        onConfirm={() =>
+                          deleteInvoice.mutate(inv.$id, {
+                            onSuccess: () => toast.success("Invoice deleted"),
+                          })
+                        }
+                      />
+                    </>
                   ) : null
                 }
               />
@@ -130,6 +160,19 @@ function InvoicesPage() {
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
+                        {inv.status === "draft" && clientEmail(inv.client_id) && (
+                          <ConfirmDialog
+                            trigger={
+                              <Button variant="ghost" size="icon" disabled={sendInvoice.isPending}>
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            }
+                            title={`Send invoice ${inv.invoice_number}?`}
+                            description={`Email it to ${clientEmail(inv.client_id)} and mark as sent.`}
+                            actionLabel="Send"
+                            onConfirm={() => handleSend(inv.$id)}
+                          />
+                        )}
                         {inv.status === "draft" && (
                           <ConfirmDialog
                             trigger={

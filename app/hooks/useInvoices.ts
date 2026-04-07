@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, ID, Query, Permission, Role } from "~/lib/appwrite";
-import { DB_ID, COLLECTIONS } from "~/lib/constants";
+import { databases, functions, ID, Query, Permission, Role } from "~/lib/appwrite";
+import { ExecutionMethod } from "appwrite";
+import { DB_ID, COLLECTIONS, FUNCTIONS } from "~/lib/constants";
 import { generateInvoiceNumber } from "~/lib/invoice-number";
 import { calculateTotals } from "~/lib/invoice-calc";
 import type { Invoice, InvoiceStatus, LineItem } from "~/types";
@@ -140,6 +141,38 @@ export function useUpdateInvoiceStatus() {
         updated_at: new Date().toISOString(),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+}
+
+export function useSendInvoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invoiceId, userId }: { invoiceId: string; userId: string }) => {
+      const execution = await functions.createExecution(
+        FUNCTIONS.SEND_INVOICE_EMAIL,
+        JSON.stringify({ invoiceId, userId }),
+        false,
+        "/",
+        ExecutionMethod.POST,
+        { "content-type": "application/json" }
+      );
+
+      let body: { success?: boolean; error?: string; emailId?: string } = {};
+      try {
+        body = JSON.parse(execution.responseBody || "{}");
+      } catch {
+        // ignore
+      }
+
+      if (execution.status === "failed" || body.success === false) {
+        throw new Error(body.error || "Failed to send invoice email");
+      }
+      return body;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      qc.invalidateQueries({ queryKey: ["invoices", "detail", vars.invoiceId] });
+    },
   });
 }
 

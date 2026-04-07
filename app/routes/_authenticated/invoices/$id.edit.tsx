@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Send } from "lucide-react";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { InvoiceForm } from "~/components/invoice/InvoiceForm";
-import { useInvoice, useUpdateInvoice } from "~/hooks/useInvoices";
+import { Button } from "~/components/ui/button";
+import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
+import { useInvoice, useUpdateInvoice, useSendInvoice } from "~/hooks/useInvoices";
 import { useClients } from "~/hooks/useClients";
 import { Skeleton } from "~/components/ui/skeleton";
 import { toast } from "sonner";
@@ -18,6 +21,8 @@ function EditInvoicePage() {
   const { data: invoice, isLoading: loadingInvoice } = useInvoice(id);
   const { data: clients, isLoading: loadingClients } = useClients(user.$id);
   const updateInvoice = useUpdateInvoice();
+  const sendInvoice = useSendInvoice();
+  const recipient = clients?.find((c) => c.$id === invoice?.client_id);
 
   function handleSubmit(values: InvoiceFormValues) {
     updateInvoice.mutate(
@@ -37,7 +42,33 @@ function EditInvoicePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Edit ${invoice.invoice_number}`} />
+      <PageHeader
+        title={`Edit ${invoice.invoice_number}`}
+        action={
+          recipient?.email ? (
+            <ConfirmDialog
+              trigger={
+                <Button disabled={sendInvoice.isPending}>
+                  <Send className="h-4 w-4 mr-2" />
+                  {sendInvoice.isPending ? "Sending..." : "Send to client"}
+                </Button>
+              }
+              title={`Send invoice ${invoice.invoice_number}?`}
+              description={`Email it to ${recipient.email} and mark as sent.`}
+              actionLabel="Send"
+              onConfirm={() =>
+                sendInvoice.mutate(
+                  { invoiceId: invoice.$id, userId: user.$id },
+                  {
+                    onSuccess: () => toast.success(`Invoice sent to ${recipient.email}`),
+                    onError: (err) => toast.error((err as Error).message || "Failed to send invoice"),
+                  }
+                )
+              }
+            />
+          ) : null
+        }
+      />
       <InvoiceForm
         clients={clients ?? []}
         defaultValues={invoice}
