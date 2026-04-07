@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { PageHeader } from "~/components/shared/PageHeader";
+import { ListCard } from "~/components/shared/ListCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -30,24 +31,24 @@ function ExpensesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="Expenses"
         description="Track your business expenses"
         action={
           <Button asChild>
             <Link to="/expenses/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Expense</span>
+              <span className="sm:hidden">Add</span>
             </Link>
           </Button>
         }
       />
 
-      {/* Filters */}
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[220px]">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
@@ -62,36 +63,22 @@ function ExpensesPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))}
         </div>
       ) : !expenses?.length ? (
         <p className="text-sm text-muted-foreground">No expenses found.</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Vendor</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="w-[60px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          <div className="space-y-2 lg:hidden">
             {expenses.map((exp) => (
-              <TableRow key={exp.$id}>
-                <TableCell className="text-muted-foreground">
-                  {format(new Date(exp.date), "dd MMM yyyy")}
-                </TableCell>
-                <TableCell>{getCategoryLabel(exp.category)}</TableCell>
-                <TableCell className="max-w-[200px] truncate">{exp.description}</TableCell>
-                <TableCell className="text-muted-foreground">{exp.vendor ?? "-"}</TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(exp.amount, exp.currency)}
-                </TableCell>
-                <TableCell>
+              <ListCard
+                key={exp.$id}
+                title={exp.description}
+                subtitle={`${getCategoryLabel(exp.category)}${exp.vendor ? ` · ${exp.vendor}` : ""}`}
+                meta={format(new Date(exp.date), "dd MMM yyyy")}
+                trailing={formatCurrency(exp.amount, exp.currency)}
+                actions={
                   <ConfirmDialog
                     trigger={
                       <Button variant="ghost" size="icon">
@@ -106,11 +93,57 @@ function ExpensesPage() {
                       })
                     }
                   />
-                </TableCell>
-              </TableRow>
+                }
+              />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+
+          <div className="hidden overflow-hidden rounded-xl border lg:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="w-[60px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {expenses.map((exp) => (
+                  <TableRow key={exp.$id}>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(exp.date), "dd MMM yyyy")}
+                    </TableCell>
+                    <TableCell>{getCategoryLabel(exp.category)}</TableCell>
+                    <TableCell className="max-w-[260px] truncate">{exp.description}</TableCell>
+                    <TableCell className="text-muted-foreground">{exp.vendor ?? "-"}</TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatCurrency(exp.amount, exp.currency)}
+                    </TableCell>
+                    <TableCell>
+                      <ConfirmDialog
+                        trigger={
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        }
+                        title="Delete expense?"
+                        description="This action cannot be undone."
+                        onConfirm={() =>
+                          deleteExpense.mutate(exp.$id, {
+                            onSuccess: () => toast.success("Expense deleted"),
+                          })
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );
