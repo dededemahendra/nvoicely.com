@@ -5,7 +5,14 @@ import { PageHeader } from "~/components/shared/PageHeader";
 import { StatusBadge } from "~/components/shared/StatusBadge";
 import { useInvoices } from "~/hooks/useInvoices";
 import { useExpenses } from "~/hooks/useExpenses";
-import { formatCurrency } from "~/lib/currency";
+import { formatCurrency, CURRENCIES } from "~/lib/currency";
+import type { CurrencyCode } from "~/types";
+
+function toIdr(amount: number, currency: CurrencyCode, rateToIdr: number | undefined) {
+  if (currency === "IDR") return amount;
+  const cfg = CURRENCIES[currency];
+  return Math.round((amount / cfg.divisor) * (rateToIdr ?? 1));
+}
 import { format } from "date-fns";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Link } from "@tanstack/react-router";
@@ -26,9 +33,18 @@ function DashboardPage() {
   ) ?? [];
   const draftInvoices = invoices?.filter((i) => i.status === "draft") ?? [];
 
-  const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const outstanding = sentInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const overdue = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
+  const totalRevenue = paidInvoices.reduce(
+    (sum, inv) => sum + toIdr(inv.total, inv.currency, inv.exchange_rate_to_idr),
+    0
+  );
+  const outstanding = sentInvoices.reduce(
+    (sum, inv) => sum + toIdr(inv.total, inv.currency, inv.exchange_rate_to_idr),
+    0
+  );
+  const overdue = overdueInvoices.reduce(
+    (sum, inv) => sum + toIdr(inv.total, inv.currency, inv.exchange_rate_to_idr),
+    0
+  );
 
   const recentInvoices = (invoices ?? []).slice(0, 5);
 

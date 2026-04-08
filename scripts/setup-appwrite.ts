@@ -155,6 +155,7 @@ async function setupInvoices() {
     { kind: "string", key: "recurring_id", size: 64 },
     { kind: "datetime", key: "last_reminder_sent_at" },
     { kind: "integer", key: "reminder_count" },
+    { kind: "string", key: "public_token", size: 64 },
     { kind: "datetime", key: "created_at", required: true },
     { kind: "datetime", key: "updated_at", required: true },
   ];
@@ -163,6 +164,7 @@ async function setupInvoices() {
   await ensureIndex("invoices", "by_status", ["status"]);
   await ensureIndex("invoices", "by_due_date", ["due_date"]);
   await ensureIndex("invoices", "by_client", ["client_id"]);
+  await ensureIndex("invoices", "by_public_token", ["public_token"]);
 }
 
 async function setupExpenses() {

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Trash2, Eye, Send } from "lucide-react";
+import { Plus, Trash2, Eye, Send, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { PageHeader } from "~/components/shared/PageHeader";
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
 import { useInvoices, useDeleteInvoice, useSendInvoice } from "~/hooks/useInvoices";
 import { useClients } from "~/hooks/useClients";
 import { formatCurrency } from "~/lib/currency";
+import { toCsv, downloadCsv } from "~/lib/csv";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
@@ -53,13 +54,48 @@ function InvoicesPage() {
         title="Invoices"
         description="Create and manage your invoices"
         action={
-          <Button asChild>
-            <Link to="/invoices/new">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Invoice</span>
-              <span className="sm:hidden">New</span>
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!invoices?.length}
+              onClick={() => {
+                const rows = (invoices ?? []).map((inv) => ({
+                  invoice_number: inv.invoice_number,
+                  client: clientName(inv.client_id),
+                  status: inv.status,
+                  issue_date: inv.issue_date.slice(0, 10),
+                  due_date: inv.due_date.slice(0, 10),
+                  currency: inv.currency,
+                  subtotal: inv.subtotal,
+                  tax_amount: inv.tax_amount,
+                  total: inv.total,
+                }));
+                const csv = toCsv(rows, [
+                  { key: "invoice_number", header: "Invoice #" },
+                  { key: "client", header: "Client" },
+                  { key: "status", header: "Status" },
+                  { key: "issue_date", header: "Issue Date" },
+                  { key: "due_date", header: "Due Date" },
+                  { key: "currency", header: "Currency" },
+                  { key: "subtotal", header: "Subtotal" },
+                  { key: "tax_amount", header: "Tax" },
+                  { key: "total", header: "Total" },
+                ]);
+                downloadCsv(`invoices-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+            <Button asChild>
+              <Link to="/invoices/new">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">New Invoice</span>
+                <span className="sm:hidden">New</span>
+              </Link>
+            </Button>
+          </div>
         }
       />
 

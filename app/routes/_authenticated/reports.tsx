@@ -17,7 +17,23 @@ import { PageHeader } from "~/components/shared/PageHeader";
 import { useInvoices } from "~/hooks/useInvoices";
 import { useClients } from "~/hooks/useClients";
 import { useExpenses } from "~/hooks/useExpenses";
-import { formatCurrency } from "~/lib/currency";
+import { formatCurrency, CURRENCIES } from "~/lib/currency";
+import type { CurrencyCode } from "~/types";
+
+// Normalize a stored amount (in its currency's smallest units) to IDR sen
+// using the per-document exchange_rate_to_idr that was captured at create
+// time. Returns IDR sen as an integer (IDR has divisor=1, so it's just IDR).
+function toIdr(
+  amount: number,
+  currency: CurrencyCode,
+  rateToIdr: number | undefined
+): number {
+  if (currency === "IDR") return amount;
+  const cfg = CURRENCIES[currency];
+  const major = amount / cfg.divisor;
+  const idrMajor = major * (rateToIdr ?? 1);
+  return Math.round(idrMajor);
+}
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: ReportsPage,
@@ -48,13 +64,13 @@ function ReportsPage() {
       .forEach((i) => {
         const k = format(new Date(i.paid_at!), "yyyy-MM");
         const bi = idx.get(k);
-        if (bi !== undefined) buckets[bi].revenue += i.total;
+        if (bi !== undefined) buckets[bi].revenue += toIdr(i.total, i.currency, i.exchange_rate_to_idr);
       });
 
     (expenses ?? []).forEach((e) => {
       const k = format(new Date(e.date), "yyyy-MM");
       const bi = idx.get(k);
-      if (bi !== undefined) buckets[bi].expenses += e.amount;
+      if (bi !== undefined) buckets[bi].expenses += toIdr(e.amount, e.currency, e.exchange_rate_to_idr);
     });
 
     return buckets;
@@ -65,7 +81,12 @@ function ReportsPage() {
     const totals = new Map<string, number>();
     (invoices ?? [])
       .filter((i) => i.status === "paid")
-      .forEach((i) => totals.set(i.client_id, (totals.get(i.client_id) ?? 0) + i.total));
+      .forEach((i) =>
+        totals.set(
+          i.client_id,
+          (totals.get(i.client_id) ?? 0) + toIdr(i.total, i.currency, i.exchange_rate_to_idr)
+        )
+      );
     return [...totals.entries()]
       .map(([id, total]) => ({
         id,
@@ -92,7 +113,7 @@ function ReportsPage() {
         const daysPast = Math.floor((today.getTime() - due.getTime()) / 86_400_000);
         const b =
           buckets.find((bk) => daysPast >= bk.min && daysPast <= bk.max) ?? buckets[0];
-        b.total += i.total;
+        b.total += toIdr(i.total, i.currency, i.exchange_rate_to_idr);
         b.count += 1;
       });
     return buckets;
@@ -103,7 +124,7 @@ function ReportsPage() {
     const yearStart = new Date(new Date().getFullYear(), 0, 1);
     return (invoices ?? [])
       .filter((i) => i.status === "paid" && i.paid_at && isAfter(new Date(i.paid_at), yearStart))
-      .reduce((s, i) => s + i.total, 0);
+      .reduce((s, i) => s + toIdr(i.total, i.currency, i.exchange_rate_to_idr), 0);
   }, [invoices]);
 
   if (loadingInv) return <Skeleton className="h-96 w-full" />;

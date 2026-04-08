@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { PageHeader } from "~/components/shared/PageHeader";
@@ -12,6 +12,7 @@ import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
 import { useExpenses, useDeleteExpense } from "~/hooks/useExpenses";
 import { EXPENSE_CATEGORIES } from "~/lib/expense-categories";
 import { formatCurrency } from "~/lib/currency";
+import { toCsv, downloadCsv } from "~/lib/csv";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/expenses/")({
@@ -36,13 +37,42 @@ function ExpensesPage() {
         title="Expenses"
         description="Track your business expenses"
         action={
-          <Button asChild>
-            <Link to="/expenses/new">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Expense</span>
-              <span className="sm:hidden">Add</span>
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!expenses?.length}
+              onClick={() => {
+                const rows = (expenses ?? []).map((e) => ({
+                  date: e.date.slice(0, 10),
+                  category: getCategoryLabel(e.category),
+                  description: e.description,
+                  vendor: e.vendor ?? "",
+                  amount: e.amount,
+                  currency: e.currency,
+                }));
+                const csv = toCsv(rows, [
+                  { key: "date", header: "Date" },
+                  { key: "category", header: "Category" },
+                  { key: "description", header: "Description" },
+                  { key: "vendor", header: "Vendor" },
+                  { key: "amount", header: "Amount" },
+                  { key: "currency", header: "Currency" },
+                ]);
+                downloadCsv(`expenses-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+              }}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+            <Button asChild>
+              <Link to="/expenses/new">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Expense</span>
+                <span className="sm:hidden">Add</span>
+              </Link>
+            </Button>
+          </div>
         }
       />
 
