@@ -8,6 +8,7 @@
  *
  * Re-running is safe: it wipes the target user's existing demo data first.
  */
+import "dotenv/config";
 import { Client, Databases, ID, Query, Permission, Role } from "node-appwrite";
 
 const {

@@ -9,6 +9,13 @@ export async function getCurrentUser() {
 }
 
 export async function login(email: string, password: string) {
+  // Clear any stale session before creating a new one — Appwrite rejects
+  // createEmailPasswordSession when a session is already active.
+  try {
+    await account.deleteSession("current");
+  } catch {
+    // no active session, ignore
+  }
   return await account.createEmailPasswordSession(email, password);
 }
 

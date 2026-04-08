@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Database } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
+import { seedUserDataFn } from "~/lib/server/seed-fn";
 import { settingsSchema, type SettingsFormValues } from "~/lib/validators/settings";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -23,6 +27,23 @@ function SettingsPage() {
   const { user } = Route.useRouteContext();
   const { data: settings, isLoading } = useSettings(user.$id);
   const upsertSettings = useUpsertSettings();
+  const qc = useQueryClient();
+  const [seeding, setSeeding] = useState(false);
+
+  async function handleSeed() {
+    setSeeding(true);
+    try {
+      const result = await seedUserDataFn({ data: { userId: user.$id } });
+      toast.success(
+        `Seeded ${result.clients} clients · ${result.invoices} invoices · ${result.expenses} expenses · ${result.recurring} recurring`
+      );
+      qc.invalidateQueries();
+    } catch (err) {
+      toast.error((err as Error).message || "Seed failed");
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   const {
     register,
@@ -188,6 +209,28 @@ function SettingsPage() {
           {upsertSettings.isPending ? "Saving..." : "Save Settings"}
         </Button>
       </form>
+
+      <Separator className="max-w-2xl" />
+
+      <div className="space-y-3 max-w-2xl">
+        <h3 className="font-medium">Demo Data</h3>
+        <p className="text-sm text-muted-foreground">
+          Replace your data with a curated set of demo clients, invoices, expenses, and recurring
+          templates. This wipes existing records for your account first.
+        </p>
+        <ConfirmDialog
+          trigger={
+            <Button type="button" variant="outline" disabled={seeding}>
+              <Database className="h-4 w-4 mr-2" />
+              {seeding ? "Seeding..." : "Load demo data"}
+            </Button>
+          }
+          title="Replace all data with demo data?"
+          description="This will delete your current clients, invoices, expenses, recurring templates, and settings, then create a fresh demo set. This cannot be undone."
+          actionLabel="Replace"
+          onConfirm={handleSeed}
+        />
+      </div>
     </div>
   );
 }

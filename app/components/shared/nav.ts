@@ -4,6 +4,7 @@ import {
   Users,
   Receipt,
   RefreshCw,
+  BarChart3,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +21,7 @@ export const primaryNav: NavItem[] = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/expenses", label: "Expenses", icon: Receipt },
   { to: "/recurring", label: "Recurring", icon: RefreshCw },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
 export const secondaryNav: NavItem[] = [

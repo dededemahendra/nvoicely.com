@@ -1,4 +1,4 @@
-import { Client, Databases, ID, Query } from "node-appwrite";
+import { Client, Databases, Functions, ID, Query, ExecutionMethod } from "node-appwrite";
 
 function calculateNextRunDate(currentDate, frequency) {
   const next = new Date(currentDate);
@@ -26,6 +26,7 @@ export default async ({ req, res, log, error }) => {
     .setKey(process.env.APPWRITE_API_KEY);
 
   const db = new Databases(client);
+  const fns = new Functions(client);
   const today = new Date().toISOString().split("T")[0];
 
   try {
@@ -67,7 +68,7 @@ export default async ({ req, res, log, error }) => {
         const total = subtotal + taxAmount;
 
         // Create invoice
-        await db.createDocument("main", "invoices", ID.unique(), {
+        const newInvoice = await db.createDocument("main", "invoices", ID.unique(), {
           user_id: schedule.user_id,
           client_id: schedule.client_id,
           invoice_number: invoiceNumber,
@@ -92,6 +93,23 @@ export default async ({ req, res, log, error }) => {
         await db.updateDocument("main", "settings", settings.$id, {
           invoice_counter: newCounter,
         });
+
+        // Auto-send if enabled on the template
+        if (schedule.auto_send) {
+          try {
+            await fns.createExecution(
+              "send-invoice-email",
+              JSON.stringify({ invoiceId: newInvoice.$id, userId: schedule.user_id }),
+              false,
+              "/",
+              ExecutionMethod.POST,
+              { "content-type": "application/json" }
+            );
+            log(`Auto-sent invoice ${invoiceNumber}`);
+          } catch (sendErr) {
+            error(`Auto-send failed for ${invoiceNumber}: ${sendErr.message}`);
+          }
+        }
 
         // Update recurring schedule
         const nextRunDate = calculateNextRunDate(
