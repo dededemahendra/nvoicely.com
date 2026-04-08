@@ -27,9 +27,12 @@ function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 }
 
-function buildHtml({ invoice, client, settings, lineItems, appUrl }) {
+function buildHtml({ invoice, client, settings, lineItems, appUrl, endpoint, projectId }) {
   const cur = invoice.currency;
   const businessName = settings?.business_name ?? "Our Business";
+  const logoUrl = settings?.logo_file_id && endpoint && projectId
+    ? `${endpoint}/storage/buckets/logos/files/${settings.logo_file_id}/view?project=${projectId}`
+    : null;
 
   const itemsHtml = lineItems
     .map(
@@ -63,6 +66,7 @@ function buildHtml({ invoice, client, settings, lineItems, appUrl }) {
 <head><meta charset="utf-8"><title>Invoice ${escapeHtml(invoice.invoice_number)}</title></head>
 <body style="font-family:Arial,sans-serif;color:#333;background:#fafafa;margin:0;padding:24px">
   <div style="max-width:600px;margin:0 auto;background:#fff;padding:32px;border-radius:8px">
+    ${logoUrl ? `<img src="${logoUrl}" alt="${escapeHtml(businessName)}" style="max-height:60px;max-width:200px;margin-bottom:16px"/>` : ""}
     <h2 style="margin:0 0 4px">Invoice ${escapeHtml(invoice.invoice_number)}</h2>
     <p style="color:#666;margin:0 0 24px">From <strong>${escapeHtml(businessName)}</strong></p>
 
@@ -154,6 +158,8 @@ export default async ({ req, res, log, error }) => {
       settings,
       lineItems,
       appUrl: process.env.APP_URL,
+      endpoint: process.env.APPWRITE_ENDPOINT,
+      projectId: process.env.APPWRITE_PROJECT_ID,
     });
 
     const result = await resend.emails.send({

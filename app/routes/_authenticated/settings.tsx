@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Database } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Database, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
 import { seedUserDataFn } from "~/lib/server/seed-fn";
+import { storage, ID, Permission, Role } from "~/lib/appwrite";
+import { BUCKETS } from "~/lib/constants";
 import { settingsSchema, type SettingsFormValues } from "~/lib/validators/settings";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -29,6 +31,43 @@ function SettingsPage() {
   const upsertSettings = useUpsertSettings();
   const qc = useQueryClient();
   const [seeding, setSeeding] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleLogoUpload(file: File) {
+    setUploadingLogo(true);
+    try {
+      // Remove previous logo if any
+      if (logoFileId) {
+        try {
+          await storage.deleteFile(BUCKETS.LOGOS, logoFileId);
+        } catch {
+          // ignore
+        }
+      }
+      const created = await storage.createFile(BUCKETS.LOGOS, ID.unique(), file, [
+        Permission.read(Role.any()),
+        Permission.update(Role.user(user.$id)),
+        Permission.delete(Role.user(user.$id)),
+      ]);
+      setValue("logo_file_id", created.$id, { shouldDirty: true });
+      toast.success("Logo uploaded — save settings to apply");
+    } catch (err) {
+      toast.error((err as Error).message || "Logo upload failed");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  async function handleLogoRemove() {
+    if (!logoFileId) return;
+    try {
+      await storage.deleteFile(BUCKETS.LOGOS, logoFileId);
+    } catch {
+      // ignore
+    }
+    setValue("logo_file_id", "", { shouldDirty: true });
+  }
 
   async function handleSeed() {
     setSeeding(true);
@@ -64,6 +103,7 @@ function SettingsPage() {
           default_tax_rate: settings.default_tax_rate ?? 11,
           default_payment_terms: settings.default_payment_terms ?? "",
           invoice_prefix: settings.invoice_prefix,
+          logo_file_id: settings.logo_file_id ?? "",
           bank_accounts: settings.bank_accounts ?? [],
           invoice_footer_notes: settings.invoice_footer_notes ?? "",
         }
@@ -76,6 +116,7 @@ function SettingsPage() {
           default_tax_rate: 11,
           default_payment_terms: "Payment due within 14 days",
           invoice_prefix: "INV",
+          logo_file_id: "",
           bank_accounts: [],
           invoice_footer_notes: "",
         },
@@ -85,6 +126,11 @@ function SettingsPage() {
     control,
     name: "bank_accounts",
   });
+
+  const logoFileId = watch("logo_file_id");
+  const logoUrl = logoFileId
+    ? storage.getFileView(BUCKETS.LOGOS, logoFileId).toString()
+    : null;
 
   function onSubmit(values: SettingsFormValues) {
     upsertSettings.mutate(
@@ -123,6 +169,58 @@ function SettingsPage() {
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="business_address">Address</Label>
               <Textarea id="business_address" {...register("business_address")} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Logo</Label>
+              <div className="flex items-center gap-4">
+                {logoUrl ? (
+                  <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
+                    No logo
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleLogoUpload(f);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadingLogo}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadingLogo ? "Uploading..." : logoFileId ? "Replace" : "Upload logo"}
+                  </Button>
+                  {logoFileId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleLogoRemove}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    PNG, JPG, WebP or SVG · max 2MB
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

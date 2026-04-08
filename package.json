@@ -8,7 +8,8 @@
     "build": "vite build",
     "start": "vite preview",
     "typecheck": "tsc --noEmit",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "setup": "tsx scripts/setup-appwrite.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

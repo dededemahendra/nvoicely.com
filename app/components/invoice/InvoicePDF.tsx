@@ -1,5 +1,7 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import { formatCurrency } from "~/lib/currency";
+import { storage } from "~/lib/appwrite";
+import { BUCKETS } from "~/lib/constants";
 import type { Invoice, Client, UserSettings, CurrencyCode } from "~/types";
 
 const styles = StyleSheet.create({
@@ -37,6 +39,9 @@ interface InvoicePDFProps {
 
 export function InvoicePDF({ invoice, client, settings }: InvoicePDFProps) {
   const cur = invoice.currency as CurrencyCode;
+  const logoUrl = settings?.logo_file_id
+    ? storage.getFileView(BUCKETS.LOGOS, settings.logo_file_id).toString()
+    : null;
 
   return (
     <Document>
@@ -44,6 +49,9 @@ export function InvoicePDF({ invoice, client, settings }: InvoicePDFProps) {
         {/* Header */}
         <View style={styles.header}>
           <View>
+            {logoUrl && (
+              <Image src={logoUrl} style={{ width: 80, height: 80, objectFit: "contain", marginBottom: 8 }} />
+            )}
             <Text style={styles.title}>INVOICE</Text>
             <Text style={{ color: "#666", marginTop: 4 }}>{invoice.invoice_number}</Text>
           </View>

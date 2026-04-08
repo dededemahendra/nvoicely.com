@@ -1,6 +1,6 @@
 import { Client, Databases, ID, Query, Permission, Role } from "node-appwrite";
 
-const DB_ID = "main";
+const DB_ID = process.env.APPWRITE_DATABASE_ID || "main";
 const C = {
   INVOICES: "invoices",
   CLIENTS: "clients",

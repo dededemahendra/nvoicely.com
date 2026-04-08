@@ -16,6 +16,7 @@ export const settingsSchema = z.object({
   default_tax_rate: z.number().min(0).max(100).optional(),
   default_payment_terms: z.string().optional(),
   invoice_prefix: z.string().min(1, "Prefix required"),
+  logo_file_id: z.string().optional(),
   bank_accounts: z.array(bankAccountSchema).optional(),
   invoice_footer_notes: z.string().optional(),
 });
