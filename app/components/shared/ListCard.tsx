@@ -47,7 +47,7 @@ export function ListCard({
   return (
     <div
       className={cn(
-        "group flex items-center justify-between gap-2 rounded-xl border bg-card p-3 shadow-sm transition-colors hover:bg-accent/40",
+        "group flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-card p-3 transition-colors hover:bg-accent/40",
         className
       )}
     >

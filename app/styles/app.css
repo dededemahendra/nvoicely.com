@@ -1,41 +1,86 @@
 @import "tailwindcss";
 
+/* Premium Ledger — fintech-inspired warm cream + forest green system */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
+
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #09090b;
+  /* Base surfaces — warm cream paper, not cold white */
+  --color-background: #f8f6f1;
+  --color-foreground: #1a1f1c;
   --color-card: #ffffff;
-  --color-card-foreground: #09090b;
+  --color-card-foreground: #1a1f1c;
   --color-popover: #ffffff;
-  --color-popover-foreground: #09090b;
-  --color-primary: #18181b;
-  --color-primary-foreground: #fafafa;
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #18181b;
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
-  --color-accent: #f4f4f5;
-  --color-accent-foreground: #18181b;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #fafafa;
-  --color-border: #e4e4e7;
-  --color-input: #e4e4e7;
-  --color-ring: #18181b;
-  --radius: 0.625rem;
+  --color-popover-foreground: #1a1f1c;
+
+  /* Brand — deep forest green */
+  --color-primary: #1c3d2f;
+  --color-primary-foreground: #f4ede0;
+
+  /* Sidebar surface — even darker, almost black-green */
+  --color-sidebar: #142620;
+  --color-sidebar-foreground: #d8d0bd;
+  --color-sidebar-accent: #1f3a30;
+  --color-sidebar-border: #1f3128;
+
+  --color-secondary: #efece4;
+  --color-secondary-foreground: #1c3d2f;
+  --color-muted: #efece4;
+  --color-muted-foreground: #6b6a62;
+  --color-accent: #e6ede8;
+  --color-accent-foreground: #1c3d2f;
+  --color-destructive: #b3261e;
+  --color-destructive-foreground: #f8f6f1;
+  --color-success: #1c5e3f;
+  --color-success-foreground: #e8f1ea;
+  --color-border: #e2ddd1;
+  --color-input: #d8d3c5;
+  --color-ring: #1c3d2f;
+  --radius: 0.5rem;
+
+  /* Typography */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", monospace;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    font-family: var(--font-sans);
+  }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
     -webkit-tap-highlight-color: transparent;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+  /* Headline serif — applied via class */
+  .font-display {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  /* Numbers everywhere */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
   .page {
-    @apply mx-auto w-full max-w-6xl px-4 md:px-6;
+    @apply mx-auto w-full max-w-6xl px-4 md:px-8;
+  }
+  /* Subtle paper grain for the background — used on body via ::before */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }

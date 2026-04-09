@@ -10,14 +10,14 @@ import { useInvoice, useSendInvoice } from "~/hooks/useInvoices";
 import { useClient } from "~/hooks/useClients";
 import { useSettings } from "~/hooks/useSettings";
 
-const PDFViewer = lazy(() =>
-  import("@react-pdf/renderer").then((mod) => ({ default: mod.PDFViewer }))
+// Single lazy chunk for all @react-pdf/renderer code — avoids Vite pre-bundling
+// the WASM-based library and prevents any SSR import issues.
+const PDFDownloadButton = lazy(() =>
+  import("~/components/invoice/PDFPreviewPane").then((m) => ({ default: m.PDFDownloadButton }))
 );
-const PDFDownloadLink = lazy(() =>
-  import("@react-pdf/renderer").then((mod) => ({ default: mod.PDFDownloadLink }))
+const PDFPreviewPane = lazy(() =>
+  import("~/components/invoice/PDFPreviewPane").then((m) => ({ default: m.PDFPreviewPane }))
 );
-
-import { InvoicePDF } from "~/components/invoice/InvoicePDF";
 
 export const Route = createFileRoute("/_authenticated/invoices/$id/preview")({
   component: InvoicePreviewPage,
@@ -75,24 +75,15 @@ function InvoicePreviewPage() {
               actionLabel="Send"
               onConfirm={handleSend}
             />
-            <Suspense fallback={<Button disabled>Loading...</Button>}>
-              <PDFDownloadLink
-                document={<InvoicePDF invoice={invoice} client={client} settings={settings} />}
-                fileName={`${invoice.invoice_number}.pdf`}
-              >
-                {({ loading }) => (
-                  <Button disabled={loading}>{loading ? "Generating..." : "Download PDF"}</Button>
-                )}
-              </PDFDownloadLink>
+            <Suspense fallback={<Button disabled variant="outline">Loading...</Button>}>
+              <PDFDownloadButton invoice={invoice} client={client} settings={settings} />
             </Suspense>
           </div>
         }
       />
 
       <Suspense fallback={<Skeleton className="h-[80vh] w-full" />}>
-        <PDFViewer className="w-full h-[80vh] rounded-md border">
-          <InvoicePDF invoice={invoice} client={client} settings={settings} />
-        </PDFViewer>
+        <PDFPreviewPane invoice={invoice} client={client} settings={settings} />
       </Suspense>
     </div>
   );
