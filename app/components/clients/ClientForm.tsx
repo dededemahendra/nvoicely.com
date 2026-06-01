@@ -5,6 +5,12 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import type { Client } from "~/types";
 
 interface ClientFormProps {
@@ -41,37 +47,44 @@ export function ClientForm({ defaultValues, onSubmit, isSubmitting }: ClientForm
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
-          <Input id="name" {...register("name")} />
-          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
-          <Input id="email" type="email" {...register("email")} />
-          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="company">Company</Label>
-          <Input id="company" {...register("company")} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" {...register("phone")} />
-        </div>
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <Card className="shadow-none dark:ring-0">
+        <CardHeader>
+          <CardTitle className="text-base">Contact</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input id="name" {...register("name")} />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input id="email" type="email" {...register("email")} />
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="company">Company</Label>
+            <Input id="company" {...register("company")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" {...register("phone")} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground">Address</h3>
-        <div className="grid gap-4 md:grid-cols-2">
+      <Card className="shadow-none dark:ring-0">
+        <CardHeader>
+          <CardTitle className="text-base">Address</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="address_line1">Address Line 1</Label>
+            <Label htmlFor="address_line1">Address line 1</Label>
             <Input id="address_line1" {...register("address_line1")} />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="address_line2">Address Line 2</Label>
+            <Label htmlFor="address_line2">Address line 2</Label>
             <Input id="address_line2" {...register("address_line2")} />
           </div>
           <div className="space-y-2">
@@ -79,33 +92,41 @@ export function ClientForm({ defaultValues, onSubmit, isSubmitting }: ClientForm
             <Input id="city" {...register("city")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="state">State/Province</Label>
+            <Label htmlFor="state">State / Province</Label>
             <Input id="state" {...register("state")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="postal_code">Postal Code</Label>
+            <Label htmlFor="postal_code">Postal code</Label>
             <Input id="postal_code" {...register("postal_code")} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
             <Input id="country" placeholder="e.g. ID, US" {...register("country")} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="space-y-2">
-        <Label htmlFor="tax_id">Tax ID (NPWP/VAT)</Label>
-        <Input id="tax_id" {...register("tax_id")} />
-      </div>
+      <Card className="shadow-none dark:ring-0">
+        <CardHeader>
+          <CardTitle className="text-base">Other</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="tax_id">Tax ID (NPWP / VAT)</Label>
+            <Input id="tax_id" {...register("tax_id")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea id="notes" {...register("notes")} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" {...register("notes")} />
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          {isSubmitting ? "Saving..." : defaultValues ? "Update client" : "Create client"}
+        </Button>
       </div>
-
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Saving..." : defaultValues ? "Update Client" : "Create Client"}
-      </Button>
     </form>
   );
 }

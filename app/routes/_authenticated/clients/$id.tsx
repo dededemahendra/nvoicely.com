@@ -29,12 +29,20 @@ function EditClientPage() {
     );
   }
 
-  if (isLoading) return <Skeleton className="h-96 w-full" />;
-  if (!client) return <p>Client not found</p>;
+  if (isLoading)
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  if (!client)
+    return (
+      <p className="text-center text-sm text-muted-foreground">Client not found</p>
+    );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Edit Client" description={client.name} />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title="Edit client" description={client.name} />
       <ClientForm defaultValues={client} onSubmit={handleSubmit} isSubmitting={updateClient.isPending} />
     </div>
   );
