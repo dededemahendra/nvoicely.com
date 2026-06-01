@@ -116,7 +116,22 @@ function ClientsPage() {
       </div>
 
       {isLoading ? (
-        <Card className="hidden shadow-none lg:block dark:ring-0">
+        <>
+          <div className="space-y-2 lg:hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-lg border bg-card p-4"
+              >
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+                <Skeleton className="h-7 w-7 rounded-md" />
+              </div>
+            ))}
+          </div>
+          <Card className="hidden shadow-none lg:block dark:ring-0">
           <CardContent className="p-0">
             <div className="grid grid-cols-[1fr_1fr_160px_140px_80px] gap-4 border-b px-6 py-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -136,7 +151,8 @@ function ClientsPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+          </Card>
+        </>
       ) : !filtered.length ? (
         <Empty className="border">
           <EmptyHeader>
