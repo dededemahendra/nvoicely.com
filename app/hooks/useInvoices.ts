@@ -22,6 +22,9 @@ export function useInvoices(userId: string) {
         const queries = [
           Query.equal("user_id", userId),
           Query.orderDesc("issue_date"),
+          // $id tiebreaker keeps the cursor unambiguous when invoices share
+          // an issue_date, so paging can't skip or duplicate at boundaries.
+          Query.orderDesc("$id"),
           Query.limit(PAGE_FETCH),
         ];
         if (cursor) queries.push(Query.cursorAfter(cursor));
