@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { nanoid } from "nanoid";
 import { invoiceSchema, type InvoiceFormValues } from "~/lib/validators/invoice";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
@@ -170,6 +171,7 @@ export function InvoiceForm({ clients, defaultValues, onSubmit, isSubmitting }: 
 
         <div className="sticky bottom-16 z-20 -mx-4 flex items-center justify-end gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:mx-0 md:rounded-xl md:border md:px-4">
           <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+            {isSubmitting && <Spinner />}
             {isSubmitting ? "Saving..." : defaultValues ? "Update invoice" : "Create invoice"}
           </Button>
         </div>

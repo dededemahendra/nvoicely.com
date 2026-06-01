@@ -16,6 +16,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
+import { Spinner } from "~/components/ui/spinner";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { useSettings, useUpsertSettings } from "~/hooks/useSettings";
 import { toast } from "sonner";
@@ -308,6 +309,7 @@ function SettingsPage() {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={upsertSettings.isPending} className="w-full sm:w-auto">
+            {upsertSettings.isPending && <Spinner />}
             {upsertSettings.isPending ? "Saving..." : "Save settings"}
           </Button>
         </div>
@@ -326,7 +328,7 @@ function SettingsPage() {
           <ConfirmDialog
             trigger={
               <Button type="button" variant="outline" disabled={seeding}>
-                <Database className="mr-2 h-4 w-4" />
+                {seeding ? <Spinner /> : <Database className="mr-2 h-4 w-4" />}
                 {seeding ? "Seeding..." : "Load demo data"}
               </Button>
             }

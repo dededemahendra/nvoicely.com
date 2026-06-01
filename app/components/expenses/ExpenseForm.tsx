@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { expenseSchema, type ExpenseFormValues } from "~/lib/validators/expense";
 import { EXPENSE_CATEGORIES } from "~/lib/expense-categories";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
@@ -126,6 +127,7 @@ export function ExpenseForm({ onSubmit, isSubmitting }: ExpenseFormProps) {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          {isSubmitting && <Spinner />}
           {isSubmitting ? "Saving..." : "Add expense"}
         </Button>
       </div>

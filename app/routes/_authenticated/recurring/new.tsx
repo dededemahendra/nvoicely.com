@@ -14,6 +14,7 @@ import { CurrencySelect } from "~/components/shared/CurrencySelect";
 import { DatePicker } from "~/components/shared/DatePicker";
 import { LineItemsTable } from "~/components/invoice/LineItemsTable";
 import { PageHeader } from "~/components/shared/PageHeader";
+import { Spinner } from "~/components/ui/spinner";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useClients } from "~/hooks/useClients";
 import { useCreateRecurring } from "~/hooks/useRecurring";
@@ -178,6 +179,7 @@ function NewRecurringPage() {
 
           <div className="flex justify-end">
             <Button type="submit" disabled={createRecurring.isPending} className="w-full sm:w-auto">
+              {createRecurring.isPending && <Spinner />}
               {createRecurring.isPending ? "Creating..." : "Create template"}
             </Button>
           </div>
