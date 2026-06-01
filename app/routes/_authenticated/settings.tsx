@@ -51,7 +51,7 @@ function SettingsPage() {
         Permission.delete(Role.user(user.$id)),
       ]);
       setValue("logo_file_id", created.$id, { shouldDirty: true });
-      toast.success("Logo uploaded — save settings to apply");
+      toast.success("Logo uploaded. Save settings to apply.");
     } catch (err) {
       toast.error((err as Error).message || "Logo upload failed");
     } finally {

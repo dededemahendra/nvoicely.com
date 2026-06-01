@@ -116,7 +116,7 @@ function InvoiceDetailPage() {
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             Billed to
           </p>
-          <p className="mt-3 font-display text-2xl">{client?.name ?? "—"}</p>
+          <p className="mt-3 font-display text-2xl">{client?.name ?? "Unknown"}</p>
           {client?.company && (
             <p className="mt-1 text-sm text-muted-foreground">{client.company}</p>
           )}

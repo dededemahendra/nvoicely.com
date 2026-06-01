@@ -101,8 +101,8 @@ function ReportsPage() {
   const aging = useMemo(() => {
     const buckets = [
       { label: "Not yet due", min: -Infinity, max: 0, total: 0, count: 0 },
-      { label: "1–30 days", min: 1, max: 30, total: 0, count: 0 },
-      { label: "31–60 days", min: 31, max: 60, total: 0, count: 0 },
+      { label: "1 to 30 days", min: 1, max: 30, total: 0, count: 0 },
+      { label: "31 to 60 days", min: 31, max: 60, total: 0, count: 0 },
       { label: "60+ days", min: 61, max: Infinity, total: 0, count: 0 },
     ];
     const today = new Date();
@@ -141,7 +141,7 @@ function ReportsPage() {
         <StatCard label="Outstanding" value={formatCurrency(totalOutstanding, "IDR")} />
         <StatCard
           label="Top Client"
-          value={topClients[0]?.name ?? "—"}
+          value={topClients[0]?.name ?? "None"}
           sub={topClients[0] ? formatCurrency(topClients[0].total, "IDR") : ""}
         />
         <StatCard label="Open Invoices" value={String(aging.reduce((s, b) => s + b.count, 0))} />
