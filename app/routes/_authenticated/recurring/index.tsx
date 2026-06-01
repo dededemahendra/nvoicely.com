@@ -140,8 +140,7 @@ function RecurringPage() {
           <Button asChild size="sm">
             <Link to="/recurring/new">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New template</span>
-              <span className="sm:hidden">New</span>
+              New template
             </Link>
           </Button>
         }
