@@ -8,6 +8,7 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { CurrencySelect } from "~/components/shared/CurrencySelect";
+import { DatePicker } from "~/components/shared/DatePicker";
 import { LineItemsTable } from "~/components/invoice/LineItemsTable";
 import type { Client, Invoice, CurrencyCode } from "~/types";
 
@@ -21,9 +22,7 @@ interface InvoiceFormProps {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
+      <h2 className="text-sm font-medium text-foreground">{title}</h2>
       <div className="rounded-xl border bg-card p-4 md:p-5">{children}</div>
     </section>
   );
@@ -106,13 +105,23 @@ export function InvoiceForm({ clients, defaultValues, onSubmit, isSubmitting }: 
 
             <div className="space-y-1.5">
               <Label htmlFor="issue_date">Issue date *</Label>
-              <Input id="issue_date" type="date" {...register("issue_date")} />
+              <DatePicker
+                id="issue_date"
+                value={watch("issue_date")}
+                onChange={(v) => setValue("issue_date", v, { shouldValidate: true })}
+                placeholder="Select issue date"
+              />
               {errors.issue_date && <p className="text-xs text-destructive">{errors.issue_date.message}</p>}
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="due_date">Due date *</Label>
-              <Input id="due_date" type="date" {...register("due_date")} />
+              <DatePicker
+                id="due_date"
+                value={watch("due_date")}
+                onChange={(v) => setValue("due_date", v, { shouldValidate: true })}
+                placeholder="Select due date"
+              />
               {errors.due_date && <p className="text-xs text-destructive">{errors.due_date.message}</p>}
             </div>
           </div>
