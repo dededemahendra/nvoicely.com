@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { Dashboard } from "~/components/dashboard";
 
@@ -16,17 +15,13 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function DashboardPage() {
   const { user } = Route.useRouteContext();
-  const now = new Date();
 
   return (
     <div className="space-y-8">
       {/* ───────── Hero ───────── */}
       <section className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {format(now, "EEEE, dd MMMM yyyy")}
-          </p>
-          <h1 className="mt-3 font-display text-4xl leading-[0.95] tracking-tight md:text-5xl">
+          <h1 className="font-display text-4xl leading-[0.95] tracking-tight md:text-5xl">
             {greeting(user.name)}.
           </h1>
         </div>
