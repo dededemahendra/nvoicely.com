@@ -405,7 +405,7 @@ function InvoicesPage() {
                   variant="outline"
                   size="sm"
                   disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPage(Math.max(1, currentPage - 1))}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -417,7 +417,7 @@ function InvoicesPage() {
                   variant="outline"
                   size="sm"
                   disabled={currentPage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
