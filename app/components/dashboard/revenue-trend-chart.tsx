@@ -52,11 +52,16 @@ export function RevenueTrendChart({
     [data, periodDays]
   );
 
+  // Compare total revenue in the first half of the window vs the second half,
+  // so a single zero day (e.g. nothing paid today) doesn't read as -100%.
+  // null = no baseline revenue in the first half → hide the badge.
   const growthPct = useMemo(() => {
-    const first = rows.find((r) => r.revenue > 0)?.revenue ?? 0;
-    const last = rows.at(-1)?.revenue ?? 0;
-    if (!first) return 0;
-    return ((last - first) / first) * 100;
+    if (rows.length < 2) return null;
+    const mid = Math.floor(rows.length / 2);
+    const firstHalf = rows.slice(0, mid).reduce((s, r) => s + r.revenue, 0);
+    const secondHalf = rows.slice(mid).reduce((s, r) => s + r.revenue, 0);
+    if (firstHalf === 0) return null;
+    return ((secondHalf - firstHalf) / firstHalf) * 100;
   }, [rows]);
 
   return (
@@ -68,10 +73,12 @@ export function RevenueTrendChart({
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Revenue</CardTitle>
-            <Delta value={growthPct} variant="badge">
-              <DeltaIcon variant="trend" />
-              <DeltaValue />
-            </Delta>
+            {growthPct !== null && (
+              <Delta value={growthPct} variant="badge">
+                <DeltaIcon variant="trend" />
+                <DeltaValue />
+              </Delta>
+            )}
           </div>
           <CardDescription>Paid revenue per day (IDR equivalent).</CardDescription>
         </div>
