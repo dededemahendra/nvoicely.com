@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const { user } = Route.useRouteContext();
   return (
-    <AppShell user={{ name: user.name, email: user.email }}>
+    <AppShell user={{ id: user.$id, name: user.name, email: user.email }}>
       <Outlet />
     </AppShell>
   );

@@ -7,7 +7,7 @@ export function AppShell({
   user,
   children,
 }: {
-  user: { name: string; email: string };
+  user: { id: string; name: string; email: string };
   children: React.ReactNode;
 }) {
   return (
@@ -15,7 +15,7 @@ export function AppShell({
       <SidebarProvider className="relative h-svh">
         <AppSidebar user={user} />
         <SidebarInset className="overflow-hidden md:peer-data-[variant=inset]:ml-0">
-          <AppHeader />
+          <AppHeader userId={user.id} />
           <div className="flex flex-1 flex-col overflow-y-auto">
             <div className="page w-full py-6 pb-24 md:py-8 lg:pb-8">
               {children}
