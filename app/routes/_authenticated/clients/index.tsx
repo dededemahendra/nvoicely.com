@@ -97,8 +97,7 @@ function ClientsPage() {
           <Button asChild size="sm">
             <Link to="/clients/new">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add client</span>
-              <span className="sm:hidden">Add</span>
+              Add client
             </Link>
           </Button>
         }

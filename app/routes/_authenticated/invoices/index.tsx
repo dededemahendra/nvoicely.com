@@ -150,12 +150,12 @@ function InvoicesPage() {
             <Button variant="outline" size="sm" disabled={!invoices?.length} onClick={exportCsv}>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
             </Button>
             <Button asChild size="sm">
               <Link to="/invoices/new">
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">New invoice</span>
-                <span className="sm:hidden">New</span>
+                New invoice
               </Link>
             </Button>
           </div>

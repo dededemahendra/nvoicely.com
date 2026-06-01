@@ -88,7 +88,7 @@ export function RevenueTrendChart({
         >
           <SelectTrigger
             aria-label="Revenue time range"
-            className="w-full min-w-36 sm:w-fit"
+            className="w-fit min-w-36"
             size="sm"
           >
             <SelectValue placeholder="Range" />
@@ -101,7 +101,7 @@ export function RevenueTrendChart({
         </Select>
       </CardHeader>
       <CardContent>
-        <ChartContainer className="aspect-22/8 w-full" config={chartConfig}>
+        <ChartContainer className="h-72 w-full" config={chartConfig}>
           <AreaChart
             accessibilityLayer
             data={rows}
