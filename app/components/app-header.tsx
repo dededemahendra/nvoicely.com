@@ -3,6 +3,7 @@ import { cn } from "~/lib/utils";
 import { Separator } from "~/components/ui/separator";
 import { AppBreadcrumbs } from "~/components/app-breadcrumbs";
 import { CustomSidebarTrigger } from "~/components/custom-sidebar-trigger";
+import { GlobalSearch } from "~/components/shared/GlobalSearch";
 import { primaryNav, secondaryNav } from "~/components/shared/nav";
 
 const allNav = [...primaryNav, ...secondaryNav];
@@ -12,7 +13,7 @@ function currentTitle(pathname: string): string | undefined {
   return allNav.find((n) => n.to !== "/" && pathname.startsWith(n.to))?.label;
 }
 
-export function AppHeader() {
+export function AppHeader({ userId }: { userId: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const title = currentTitle(pathname);
 
@@ -28,6 +29,9 @@ export function AppHeader() {
         orientation="vertical"
       />
       <AppBreadcrumbs page={title ? { title } : null} />
+      <div className="ml-auto">
+        <GlobalSearch userId={userId} />
+      </div>
     </header>
   );
 }
