@@ -28,8 +28,11 @@ function NewExpensePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="New Expense" />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <PageHeader
+        title="New expense"
+        description="Record a business expense to track spending."
+      />
       <ExpenseForm onSubmit={handleSubmit} isSubmitting={createExpense.isPending} />
     </div>
   );

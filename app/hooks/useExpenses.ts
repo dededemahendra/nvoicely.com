@@ -4,27 +4,30 @@ import { DB_ID, COLLECTIONS } from "~/lib/constants";
 import type { Expense } from "~/types";
 import type { ExpenseFormValues } from "~/lib/validators/expense";
 
-interface ExpenseFilters {
-  category?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}
+const PAGE_FETCH = 100;
 
-export function useExpenses(userId: string, filters?: ExpenseFilters) {
+export function useExpenses(userId: string) {
   return useQuery({
-    queryKey: ["expenses", userId, filters],
+    queryKey: ["expenses", userId],
     queryFn: async () => {
-      const queries = [
-        Query.equal("user_id", userId),
-        Query.orderDesc("date"),
-        Query.limit(100),
-      ];
-      if (filters?.category) queries.push(Query.equal("category", filters.category));
-      if (filters?.dateFrom) queries.push(Query.greaterThanEqual("date", filters.dateFrom));
-      if (filters?.dateTo) queries.push(Query.lessThanEqual("date", filters.dateTo));
-
-      const res = await databases.listDocuments(DB_ID, COLLECTIONS.EXPENSES, queries);
-      return res.documents as unknown as Expense[];
+      // Fetch the full set (category filter, search, and pagination are all
+      // client-side); page past Appwrite's cap with a cursor (+$id tiebreaker).
+      const docs: Record<string, unknown>[] = [];
+      let cursor: string | undefined;
+      for (;;) {
+        const queries = [
+          Query.equal("user_id", userId),
+          Query.orderDesc("date"),
+          Query.orderDesc("$id"),
+          Query.limit(PAGE_FETCH),
+        ];
+        if (cursor) queries.push(Query.cursorAfter(cursor));
+        const res = await databases.listDocuments(DB_ID, COLLECTIONS.EXPENSES, queries);
+        docs.push(...res.documents);
+        if (res.documents.length < PAGE_FETCH) break;
+        cursor = res.documents[res.documents.length - 1].$id;
+      }
+      return docs as unknown as Expense[];
     },
     enabled: !!userId,
   });
