@@ -7,18 +7,33 @@ import { calculateTotals } from "~/lib/invoice-calc";
 import type { Invoice, InvoiceStatus, LineItem } from "~/types";
 import type { InvoiceFormValues } from "~/lib/validators/invoice";
 
+const PAGE_FETCH = 100;
+
 export function useInvoices(userId: string) {
   return useQuery({
     queryKey: ["invoices", userId],
     queryFn: async () => {
-      const res = await databases.listDocuments(DB_ID, COLLECTIONS.INVOICES, [
-        Query.equal("user_id", userId),
-        Query.orderDesc("issue_date"),
-        Query.limit(100),
-      ]);
-      return res.documents.map((doc) => ({
+      // Status filtering, "overdue" derivation, and the filter counts are all
+      // computed client-side, so we need the full set. Page through Appwrite's
+      // per-request cap with a cursor instead of silently stopping at 100.
+      const docs: Record<string, unknown>[] = [];
+      let cursor: string | undefined;
+      for (;;) {
+        const queries = [
+          Query.equal("user_id", userId),
+          Query.orderDesc("issue_date"),
+          Query.limit(PAGE_FETCH),
+        ];
+        if (cursor) queries.push(Query.cursorAfter(cursor));
+        const res = await databases.listDocuments(DB_ID, COLLECTIONS.INVOICES, queries);
+        docs.push(...res.documents);
+        if (res.documents.length < PAGE_FETCH) break;
+        cursor = res.documents[res.documents.length - 1].$id;
+      }
+      return docs.map((doc) => ({
         ...doc,
-        line_items: typeof doc.line_items === "string" ? JSON.parse(doc.line_items) : doc.line_items,
+        line_items:
+          typeof doc.line_items === "string" ? JSON.parse(doc.line_items) : doc.line_items,
       })) as unknown as Invoice[];
     },
     enabled: !!userId,
