@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { AppLayout } from "~/components/shared/AppLayout";
+import { AppShell } from "~/components/app-shell";
 import { getCurrentUser } from "~/lib/auth";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -19,9 +19,10 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const { user } = Route.useRouteContext();
   return (
-    <AppLayout>
+    <AppShell user={{ name: user.name, email: user.email }}>
       <Outlet />
-    </AppLayout>
+    </AppShell>
   );
 }

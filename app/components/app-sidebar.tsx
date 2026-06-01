@@ -1,78 +1,70 @@
-import { LogoIcon } from "~/components/logo";
-import { Button } from "~/components/ui/button";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
 } from "~/components/ui/sidebar";
-import { NavGroup } from "~/components/nav-group";
-import { footerNavLinks, navGroups } from "~/components/app-shared";
-import { LatestChange } from "~/components/latest-change";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { primaryNav } from "~/components/shared/nav";
+import { NavUser } from "~/components/nav-user";
 
-export function AppSidebar() {
-	return (
-		<Sidebar collapsible="icon" variant="inset">
-			<SidebarHeader className="h-14 justify-center">
-				<SidebarMenuButton asChild>
-					<a href="#link">
-						<LogoIcon />
-						<span className="font-medium">Efferd</span>
-					</a>
-				</SidebarMenuButton>
-			</SidebarHeader>
-			<SidebarContent>
-				<SidebarGroup>
-					<SidebarMenuItem className="flex items-center gap-2">
-						<SidebarMenuButton
-							className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-							tooltip="Quick Create"
-						>
-							<PlusIcon
-							/>
-							<span>New Conversation</span>
-						</SidebarMenuButton>
-						<Button
-							aria-label="Search conversations"
-							className="size-8 group-data-[collapsible=icon]:opacity-0"
-							size="icon"
-							variant="outline"
-						>
-							<SearchIcon
-							/>
-							<span className="sr-only">Search conversations</span>
-						</Button>
-					</SidebarMenuItem>
-				</SidebarGroup>
-				{navGroups.map((group, index) => (
-					<NavGroup key={`sidebar-group-${index}`} {...group} />
-				))}
-			</SidebarContent>
-			<SidebarFooter>
-				<LatestChange />
-				<SidebarMenu className="mt-2">
-					{footerNavLinks.map((item) => (
-						<SidebarMenuItem key={item.title}>
-							<SidebarMenuButton
-								asChild
-								className="text-muted-foreground"
-								isActive={item.isActive}
-								size="sm"
-							>
-								<a href={item.path}>
-									{item.icon}
-									<span>{item.title}</span>
-								</a>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					))}
-				</SidebarMenu>
-			</SidebarFooter>
-		</Sidebar>
-	);
+export function AppSidebar({ user }: { user: { name: string; email: string } }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isActive = (to: string) =>
+    to === "/" ? pathname === "/" : pathname.startsWith(to);
+
+  return (
+    <Sidebar collapsible="icon" variant="inset">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild size="lg">
+              <Link to="/">
+                <span className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary font-display text-lg leading-none text-primary-foreground">
+                  L
+                </span>
+                <span className="flex items-baseline gap-1">
+                  <span className="font-display text-xl leading-none">Ledger</span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    ·co
+                  </span>
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            {primaryNav.map((item) => (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(item.to)}
+                  tooltip={item.label}
+                >
+                  <Link to={item.to}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
 }
