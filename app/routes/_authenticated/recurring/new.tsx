@@ -9,7 +9,9 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { CurrencySelect } from "~/components/shared/CurrencySelect";
+import { DatePicker } from "~/components/shared/DatePicker";
 import { LineItemsTable } from "~/components/invoice/LineItemsTable";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -64,92 +66,121 @@ function NewRecurringPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="New Recurring Invoice" />
+      <PageHeader
+        title="New recurring invoice"
+        description="Generate invoices for a client automatically on a schedule."
+      />
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="name">Template Name *</Label>
-              <Input id="name" placeholder="e.g. Monthly Retainer" {...register("name")} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-            </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Schedule</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="name">Template name *</Label>
+                <Input id="name" placeholder="e.g. Monthly retainer" {...register("name")} />
+                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+              </div>
 
-            <div className="space-y-2">
-              <Label>Client *</Label>
-              <Select value={watch("client_id")} onValueChange={(v) => setValue("client_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>
-                  {clients?.map((c) => (
-                    <SelectItem key={c.$id} value={c.$id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.client_id && <p className="text-sm text-destructive">{errors.client_id.message}</p>}
-            </div>
+              <div className="space-y-2">
+                <Label>Client *</Label>
+                <Select value={watch("client_id")} onValueChange={(v) => setValue("client_id", v)}>
+                  <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                  <SelectContent>
+                    {clients?.map((c) => (
+                      <SelectItem key={c.$id} value={c.$id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.client_id && <p className="text-sm text-destructive">{errors.client_id.message}</p>}
+              </div>
 
-            <div className="space-y-2">
-              <Label>Frequency *</Label>
-              <Select value={watch("frequency")} onValueChange={(v: any) => setValue("frequency", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label>Frequency *</Label>
+                <Select value={watch("frequency")} onValueChange={(v: any) => setValue("frequency", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date *</Label>
-              <Input id="start_date" type="date" {...register("start_date")} />
-              {errors.start_date && <p className="text-sm text-destructive">{errors.start_date.message}</p>}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Start date *</Label>
+                <DatePicker
+                  id="start_date"
+                  value={watch("start_date")}
+                  onChange={(v) => setValue("start_date", v, { shouldValidate: true, shouldDirty: true })}
+                  placeholder="Select start date"
+                />
+                {errors.start_date && <p className="text-sm text-destructive">{errors.start_date.message}</p>}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="end_date">End Date (optional)</Label>
-              <Input id="end_date" type="date" {...register("end_date")} />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">End date (optional)</Label>
+                <DatePicker
+                  id="end_date"
+                  value={watch("end_date")}
+                  onChange={(v) => setValue("end_date", v, { shouldDirty: true })}
+                  placeholder="No end date"
+                  clearable
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <CurrencySelect
-                value={watch("currency") as CurrencyCode}
-                onValueChange={(v) => setValue("currency", v)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <CurrencySelect
+                  value={watch("currency") as CurrencyCode}
+                  onValueChange={(v) => setValue("currency", v)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Line items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LineItemsTable />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Notes &amp; terms</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" {...register("notes")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="terms">Payment terms</Label>
+                <Textarea id="terms" {...register("terms")} />
+              </div>
+              <div className="flex items-center gap-3 md:col-span-2">
+                <Switch
+                  id="auto_send"
+                  checked={watch("auto_send")}
+                  onCheckedChange={(checked) => setValue("auto_send", checked)}
+                />
+                <Label htmlFor="auto_send" className="font-normal">
+                  Automatically email the invoice when generated
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={createRecurring.isPending} className="w-full sm:w-auto">
+              {createRecurring.isPending ? "Creating..." : "Create template"}
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <Label>Line Items</Label>
-            <LineItemsTable />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" {...register("notes")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="terms">Payment Terms</Label>
-              <Textarea id="terms" {...register("terms")} />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Switch
-              id="auto_send"
-              checked={watch("auto_send")}
-              onCheckedChange={(checked) => setValue("auto_send", checked)}
-            />
-            <Label htmlFor="auto_send" className="font-normal">
-              Automatically email invoice on generation
-            </Label>
-          </div>
-
-          <Button type="submit" disabled={createRecurring.isPending}>
-            {createRecurring.isPending ? "Creating..." : "Create Template"}
-          </Button>
         </form>
       </FormProvider>
     </div>

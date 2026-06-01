@@ -4,18 +4,37 @@ import { DB_ID, COLLECTIONS } from "~/lib/constants";
 import type { RecurringTemplate } from "~/types";
 import type { RecurringFormValues } from "~/lib/validators/recurring";
 
+const PAGE_FETCH = 100;
+
 export function useRecurringTemplates(userId: string) {
   return useQuery({
     queryKey: ["recurring", userId],
     queryFn: async () => {
-      const res = await databases.listDocuments(DB_ID, COLLECTIONS.RECURRING_TEMPLATES, [
-        Query.equal("user_id", userId),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ]);
-      return res.documents.map((doc) => ({
+      // Filtering, counts, and pagination are client-side, so fetch the full
+      // set; page past Appwrite's cap with a cursor (+$id tiebreaker).
+      const docs: Record<string, unknown>[] = [];
+      let cursor: string | undefined;
+      for (;;) {
+        const queries = [
+          Query.equal("user_id", userId),
+          Query.orderDesc("$createdAt"),
+          Query.orderDesc("$id"),
+          Query.limit(PAGE_FETCH),
+        ];
+        if (cursor) queries.push(Query.cursorAfter(cursor));
+        const res = await databases.listDocuments(
+          DB_ID,
+          COLLECTIONS.RECURRING_TEMPLATES,
+          queries
+        );
+        docs.push(...res.documents);
+        if (res.documents.length < PAGE_FETCH) break;
+        cursor = res.documents[res.documents.length - 1].$id;
+      }
+      return docs.map((doc) => ({
         ...doc,
-        line_items: typeof doc.line_items === "string" ? JSON.parse(doc.line_items) : doc.line_items,
+        line_items:
+          typeof doc.line_items === "string" ? JSON.parse(doc.line_items) : doc.line_items,
       })) as unknown as RecurringTemplate[];
     },
     enabled: !!userId,

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import {
@@ -16,6 +16,8 @@ interface DatePickerProps {
   placeholder?: string;
   id?: string;
   disabled?: boolean;
+  /** Show a clear (X) button when a date is set (for optional fields). */
+  clearable?: boolean;
 }
 
 export function DatePicker({
@@ -24,6 +26,7 @@ export function DatePicker({
   placeholder = "Pick a date",
   id,
   disabled,
+  clearable,
 }: DatePickerProps) {
   // Parse as local midnight to avoid the date shifting a day across timezones.
   // Slice to date-only so a full ISO string can't produce an invalid date.
@@ -33,39 +36,53 @@ export function DatePicker({
   const selectedYear = date ? date.getFullYear() : thisYear;
   const minYear = Math.min(thisYear - 5, selectedYear);
   const maxYear = Math.max(thisYear + 5, selectedYear);
+  const showClear = clearable && !!date && !disabled;
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
+    <div className="relative">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            className={cn(
+              "w-full justify-start text-left font-normal",
+              showClear && "pr-9",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "dd MMM yyyy") : placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(d) => {
+              // Ignore deselect (re-click) so a required date field isn't cleared.
+              if (d) onChange(format(d, "yyyy-MM-dd"));
+            }}
+            captionLayout="dropdown"
+            startMonth={new Date(minYear, 0)}
+            endMonth={new Date(maxYear, 11)}
+            defaultMonth={date}
+            autoFocus
+          />
+        </PopoverContent>
+      </Popover>
+      {showClear && (
+        <button
           type="button"
-          variant="outline"
-          disabled={disabled}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground"
-          )}
+          aria-label="Clear date"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "dd MMM yyyy") : placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(d) => {
-            // Ignore deselect (re-click) so a required date field isn't cleared.
-            if (d) onChange(format(d, "yyyy-MM-dd"));
-          }}
-          captionLayout="dropdown"
-          startMonth={new Date(minYear, 0)}
-          endMonth={new Date(maxYear, 11)}
-          defaultMonth={date}
-          autoFocus
-        />
-      </PopoverContent>
-    </Popover>
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
