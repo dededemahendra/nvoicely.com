@@ -3,9 +3,7 @@ import { useDashboardMetrics } from "./metrics";
 import { KpiStats } from "./kpi-stats";
 import { RevenueTrendChart } from "./revenue-trend-chart";
 import { StatusBreakdownChart } from "./status-breakdown-chart";
-import { DaysToPaymentChart } from "./days-to-payment-chart";
 import { RecentInvoices } from "./recent-invoices";
-import { TopClients } from "./top-clients";
 
 export function Dashboard({ userId }: { userId: string }) {
   const metrics = useDashboardMetrics(userId);
@@ -18,8 +16,6 @@ export function Dashboard({ userId }: { userId: string }) {
         ))}
         <Skeleton className="h-72 lg:col-span-3" />
         <Skeleton className="h-72" />
-        <Skeleton className="h-64 lg:col-span-2" />
-        <Skeleton className="h-64 lg:col-span-2" />
         <Skeleton className="h-80 lg:col-span-4" />
       </div>
     );
@@ -30,12 +26,6 @@ export function Dashboard({ userId }: { userId: string }) {
       <KpiStats metrics={metrics} />
       <RevenueTrendChart data={metrics.revenueDaily} />
       <StatusBreakdownChart data={metrics.statusBreakdown} />
-      <DaysToPaymentChart
-        data={metrics.paymentBuckets}
-        avgDays={metrics.avgDaysToPayment}
-        className="lg:col-span-2"
-      />
-      <TopClients data={metrics.topClients} className="lg:col-span-2" />
       <RecentInvoices data={metrics.recentInvoices} className="lg:col-span-4" />
     </div>
   );
