@@ -1,17 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Cell,
-} from "recharts";
+import { useId, useMemo } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, subMonths, startOfMonth, isAfter } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "~/components/ui/chart";
 import { Skeleton } from "~/components/ui/skeleton";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { useInvoices } from "~/hooks/useInvoices";
@@ -20,9 +19,8 @@ import { useExpenses } from "~/hooks/useExpenses";
 import { formatCurrency, CURRENCIES } from "~/lib/currency";
 import type { CurrencyCode } from "~/types";
 
-// Normalize a stored amount (in its currency's smallest units) to IDR sen
-// using the per-document exchange_rate_to_idr that was captured at create
-// time. Returns IDR sen as an integer (IDR has divisor=1, so it's just IDR).
+// Normalize a stored amount (in its currency's smallest units) to IDR using the
+// per-document exchange_rate_to_idr captured at create time.
 function toIdr(
   amount: number,
   currency: CurrencyCode,
@@ -30,10 +28,18 @@ function toIdr(
 ): number {
   if (currency === "IDR") return amount;
   const cfg = CURRENCIES[currency];
-  const major = amount / cfg.divisor;
-  const idrMajor = major * (rateToIdr ?? 1);
-  return Math.round(idrMajor);
+  return Math.round((amount / cfg.divisor) * (rateToIdr ?? 1));
 }
+
+const compact = (v: number) =>
+  new Intl.NumberFormat("en", { notation: "compact" }).format(v);
+
+const revenueConfig = {
+  revenue: { label: "Revenue", color: "var(--chart-1)" },
+  expenses: { label: "Expenses", color: "var(--chart-5)" },
+} satisfies ChartConfig;
+
+const agingColors = ["var(--chart-1)", "var(--chart-4)", "var(--chart-3)", "var(--chart-5)"];
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: ReportsPage,
@@ -44,32 +50,26 @@ function ReportsPage() {
   const { data: invoices, isLoading: loadingInv } = useInvoices(user.$id);
   const { data: clients } = useClients(user.$id);
   const { data: expenses } = useExpenses(user.$id);
+  const gradId = useId().replace(/:/g, "");
 
-  // Last 6 months revenue (paid invoices)
+  // Last 6 months revenue (paid invoices) vs expenses
   const revenueByMonth = useMemo(() => {
     const buckets: { month: string; key: string; revenue: number; expenses: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = startOfMonth(subMonths(new Date(), i));
-      buckets.push({
-        month: format(d, "MMM"),
-        key: format(d, "yyyy-MM"),
-        revenue: 0,
-        expenses: 0,
-      });
+      buckets.push({ month: format(d, "MMM"), key: format(d, "yyyy-MM"), revenue: 0, expenses: 0 });
     }
     const idx = new Map(buckets.map((b, i) => [b.key, i]));
 
     (invoices ?? [])
       .filter((i) => i.status === "paid" && i.paid_at)
       .forEach((i) => {
-        const k = format(new Date(i.paid_at!), "yyyy-MM");
-        const bi = idx.get(k);
+        const bi = idx.get(format(new Date(i.paid_at!), "yyyy-MM"));
         if (bi !== undefined) buckets[bi].revenue += toIdr(i.total, i.currency, i.exchange_rate_to_idr);
       });
 
     (expenses ?? []).forEach((e) => {
-      const k = format(new Date(e.date), "yyyy-MM");
-      const bi = idx.get(k);
+      const bi = idx.get(format(new Date(e.date), "yyyy-MM"));
       if (bi !== undefined) buckets[bi].expenses += toIdr(e.amount, e.currency, e.exchange_rate_to_idr);
     });
 
@@ -111,8 +111,7 @@ function ReportsPage() {
       .forEach((i) => {
         const due = new Date(i.due_date);
         const daysPast = Math.floor((today.getTime() - due.getTime()) / 86_400_000);
-        const b =
-          buckets.find((bk) => daysPast >= bk.min && daysPast <= bk.max) ?? buckets[0];
+        const b = buckets.find((bk) => daysPast >= bk.min && daysPast <= bk.max) ?? buckets[0];
         b.total += toIdr(i.total, i.currency, i.exchange_rate_to_idr);
         b.count += 1;
       });
@@ -120,6 +119,7 @@ function ReportsPage() {
   }, [invoices]);
 
   const totalOutstanding = aging.reduce((s, b) => s + b.total, 0);
+  const agingMax = Math.max(...aging.map((b) => b.total), 1);
   const ytdRevenue = useMemo(() => {
     const yearStart = new Date(new Date().getFullYear(), 0, 1);
     return (invoices ?? [])
@@ -127,104 +127,126 @@ function ReportsPage() {
       .reduce((s, i) => s + toIdr(i.total, i.currency, i.exchange_rate_to_idr), 0);
   }, [invoices]);
 
-  if (loadingInv) return <Skeleton className="h-96 w-full" />;
-
-  const agingColors = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"];
+  if (loadingInv) return <ReportsSkeleton />;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <PageHeader title="Reports" description="Revenue, expenses, and accounts receivable" />
+    <div className="space-y-6">
+      <PageHeader title="Reports" description="Revenue, expenses, and accounts receivable." />
 
       {/* Headline stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="YTD Revenue" value={formatCurrency(ytdRevenue, "IDR")} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="YTD revenue" value={formatCurrency(ytdRevenue, "IDR")} />
         <StatCard label="Outstanding" value={formatCurrency(totalOutstanding, "IDR")} />
         <StatCard
-          label="Top Client"
+          label="Top client"
           value={topClients[0]?.name ?? "None"}
-          sub={topClients[0] ? formatCurrency(topClients[0].total, "IDR") : ""}
+          sub={topClients[0] ? formatCurrency(topClients[0].total, "IDR") : undefined}
         />
-        <StatCard label="Open Invoices" value={String(aging.reduce((s, b) => s + b.count, 0))} />
+        <StatCard label="Open invoices" value={String(aging.reduce((s, b) => s + b.count, 0))} />
       </div>
 
       {/* Revenue vs Expenses */}
-      <Card>
+      <Card className="shadow-none dark:ring-0">
         <CardHeader>
-          <CardTitle className="text-base">Revenue vs Expenses · Last 6 months</CardTitle>
+          <CardTitle className="text-base">Revenue vs expenses</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-72 w-full">
-            <ResponsiveContainer>
-              <BarChart data={revenueByMonth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="month" fontSize={12} />
-                <YAxis
-                  fontSize={12}
-                  tickFormatter={(v) => new Intl.NumberFormat("en", { notation: "compact" }).format(v)}
-                />
-                <Tooltip
-                  formatter={(v) => formatCurrency(Number(v), "IDR")}
-                  contentStyle={{ fontSize: 12 }}
-                />
-                <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartContainer config={revenueConfig} className="aspect-[16/7] w-full">
+            <AreaChart accessibilityLayer data={revenueByMonth} margin={{ left: 4, right: 8, top: 8 }}>
+              <defs>
+                <linearGradient id={`rev-${gradId}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-revenue)" stopOpacity={0.45} />
+                  <stop offset="55%" stopColor="var(--color-revenue)" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="var(--color-revenue)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id={`exp-${gradId}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-expenses)" stopOpacity={0.4} />
+                  <stop offset="55%" stopColor="var(--color-expenses)" stopOpacity={0.1} />
+                  <stop offset="100%" stopColor="var(--color-expenses)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid className="stroke-border" vertical={false} />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={8} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                width={44}
+                tick={{ className: "tabular-nums" }}
+                tickFormatter={compact}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent indicator="line" formatter={(v) => formatCurrency(Number(v), "IDR")} />
+                }
+              />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Area
+                dataKey="revenue"
+                type="monotone"
+                stroke="var(--color-revenue)"
+                strokeWidth={2}
+                fill={`url(#rev-${gradId})`}
+                dot={false}
+              />
+              <Area
+                dataKey="expenses"
+                type="monotone"
+                stroke="var(--color-expenses)"
+                strokeWidth={2}
+                fill={`url(#exp-${gradId})`}
+                dot={false}
+              />
+            </AreaChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* A/R Aging */}
-        <Card>
+        <Card className="shadow-none dark:ring-0">
           <CardHeader>
-            <CardTitle className="text-base">Accounts Receivable Aging</CardTitle>
+            <CardTitle className="text-base">Accounts receivable aging</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 w-full">
-              <ResponsiveContainer>
-                <BarChart data={aging} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis
-                    type="number"
-                    fontSize={12}
-                    tickFormatter={(v) =>
-                      new Intl.NumberFormat("en", { notation: "compact" }).format(v)
-                    }
-                  />
-                  <YAxis dataKey="label" type="category" width={90} fontSize={12} />
-                  <Tooltip
-                    formatter={(v) => formatCurrency(Number(v), "IDR")}
-                    contentStyle={{ fontSize: 12 }}
-                  />
-                  <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-                    {aging.map((_, i) => (
-                      <Cell key={i} fill={agingColors[i]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-              {aging.map((b, i) => (
-                <div key={b.label} className="flex items-center gap-2">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: agingColors[i] }}
-                  />
-                  <span>
-                    {b.label}: {b.count}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {totalOutstanding === 0 ? (
+              <p className="text-sm text-muted-foreground">No outstanding invoices.</p>
+            ) : (
+              <div className="space-y-4">
+                {aging.map((b, i) => (
+                  <div key={b.label} className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ background: agingColors[i] }}
+                        />
+                        <span className="font-medium">{b.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {b.count} invoice{b.count === 1 ? "" : "s"}
+                        </span>
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {formatCurrency(b.total, "IDR")}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${(b.total / agingMax) * 100}%`, background: agingColors[i] }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Top Clients */}
-        <Card>
+        <Card className="shadow-none dark:ring-0">
           <CardHeader>
-            <CardTitle className="text-base">Top Clients</CardTitle>
+            <CardTitle className="text-base">Top clients</CardTitle>
           </CardHeader>
           <CardContent>
             {topClients.length === 0 ? (
@@ -236,14 +258,16 @@ function ReportsPage() {
                   return (
                     <div key={c.id} className="space-y-1">
                       <div className="flex items-baseline justify-between text-sm">
-                        <span className="font-medium">
+                        <span className="truncate font-medium">
                           {i + 1}. {c.name}
                         </span>
-                        <span className="tabular-nums">{formatCurrency(c.total, "IDR")}</span>
+                        <span className="shrink-0 pl-3 tabular-nums">
+                          {formatCurrency(c.total, "IDR")}
+                        </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-emerald-500"
+                          className="h-full rounded-full bg-[var(--chart-1)]"
                           style={{ width: `${(c.total / max) * 100}%` }}
                         />
                       </div>
@@ -261,10 +285,57 @@ function ReportsPage() {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <Card className="p-4">
+    <Card className="gap-0 p-4 shadow-none dark:ring-0">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="mt-2 truncate text-lg font-semibold tabular-nums md:text-2xl">{value}</div>
-      {sub && <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>}
+      <div className="mt-2 truncate font-display text-2xl tabular-nums">{value}</div>
+      {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
     </Card>
+  );
+}
+
+function ReportsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="gap-2 p-4 shadow-none dark:ring-0">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-7 w-28" />
+          </Card>
+        ))}
+      </div>
+      <Card className="shadow-none dark:ring-0">
+        <CardHeader>
+          <Skeleton className="h-4 w-40" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="aspect-[16/7] w-full" />
+        </CardContent>
+      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Card key={i} className="shadow-none dark:ring-0">
+            <CardHeader>
+              <Skeleton className="h-4 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({ length: 4 }).map((_, r) => (
+                <div key={r} className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
