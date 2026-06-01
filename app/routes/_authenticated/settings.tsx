@@ -14,7 +14,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { Separator } from "~/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { useSettings, useUpsertSettings } from "~/hooks/useSettings";
@@ -142,19 +142,21 @@ function SettingsPage() {
     );
   }
 
-  if (isLoading) return <Skeleton className="h-96 w-full" />;
+  if (isLoading) return <SettingsSkeleton />;
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Settings" description="Configure your business details and invoice defaults" />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title="Settings" description="Configure your business details and invoice defaults." />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
-        {/* Business Info */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Business Information</h3>
-          <div className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Business info */}
+        <Card className="shadow-none dark:ring-0">
+          <CardHeader>
+            <CardTitle className="text-base">Business information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="business_name">Business Name *</Label>
+              <Label htmlFor="business_name">Business name *</Label>
               <Input id="business_name" {...register("business_name")} />
               {errors.business_name && <p className="text-sm text-destructive">{errors.business_name.message}</p>}
             </div>
@@ -175,7 +177,6 @@ function SettingsPage() {
               <div className="flex items-center gap-4">
                 {logoUrl ? (
                   <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
                   </div>
                 ) : (
@@ -202,37 +203,30 @@ function SettingsPage() {
                     disabled={uploadingLogo}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="mr-2 h-4 w-4" />
                     {uploadingLogo ? "Uploading..." : logoFileId ? "Replace" : "Upload logo"}
                   </Button>
                   {logoFileId && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleLogoRemove}
-                    >
-                      <X className="h-4 w-4 mr-2" />
+                    <Button type="button" variant="ghost" size="sm" onClick={handleLogoRemove}>
+                      <X className="mr-2 h-4 w-4" />
                       Remove
                     </Button>
                   )}
-                  <p className="text-[11px] text-muted-foreground">
-                    PNG, JPG, WebP or SVG · max 2MB
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">PNG, JPG, WebP or SVG · max 2MB</p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <Separator />
-
-        {/* Invoice Defaults */}
-        <div className="space-y-4">
-          <h3 className="font-medium">Invoice Defaults</h3>
-          <div className="grid gap-4 md:grid-cols-2">
+        {/* Invoice defaults */}
+        <Card className="shadow-none dark:ring-0">
+          <CardHeader>
+            <CardTitle className="text-base">Invoice defaults</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Default Currency</Label>
+              <Label>Default currency</Label>
               <Select value={watch("default_currency")} onValueChange={(v) => setValue("default_currency", v as CurrencyCode)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -243,92 +237,132 @@ function SettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="default_tax_rate">Default Tax Rate (%)</Label>
-              <Input id="default_tax_rate" type="number" step="0.1" {...register("default_tax_rate", { valueAsNumber: true })} />
+              <Label htmlFor="default_tax_rate">Default tax rate (%)</Label>
+              <Input id="default_tax_rate" type="number" step="0.1" className="tabular-nums" {...register("default_tax_rate", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="invoice_prefix">Invoice Prefix *</Label>
+              <Label htmlFor="invoice_prefix">Invoice prefix *</Label>
               <Input id="invoice_prefix" {...register("invoice_prefix")} />
               {errors.invoice_prefix && <p className="text-sm text-destructive">{errors.invoice_prefix.message}</p>}
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="default_payment_terms">Default Payment Terms</Label>
+              <Label htmlFor="default_payment_terms">Default payment terms</Label>
               <Textarea id="default_payment_terms" {...register("default_payment_terms")} />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <Separator />
-
-        {/* Bank Accounts */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">Bank Accounts</h3>
+        {/* Bank accounts */}
+        <Card className="shadow-none dark:ring-0">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base">Bank accounts</CardTitle>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => appendBank({ bank_name: "", account_name: "", account_number: "", currency: "IDR" })}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Bank
+              <Plus className="mr-1 h-4 w-4" />
+              Add bank
             </Button>
-          </div>
-          {bankFields.map((field, index) => (
-            <div key={field.id} className="grid gap-3 md:grid-cols-4 items-end rounded-md border p-3">
-              <div className="space-y-2">
-                <Label>Bank Name</Label>
-                <Input {...register(`bank_accounts.${index}.bank_name`)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Name</Label>
-                <Input {...register(`bank_accounts.${index}.account_name`)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Number</Label>
-                <Input {...register(`bank_accounts.${index}.account_number`)} />
-              </div>
-              <Button type="button" variant="ghost" size="icon" onClick={() => removeBank(index)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {bankFields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No bank accounts added.</p>
+            ) : (
+              bankFields.map((field, index) => (
+                <div key={field.id} className="grid items-end gap-3 rounded-md border p-3 md:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label>Bank name</Label>
+                    <Input {...register(`bank_accounts.${index}.bank_name`)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Account name</Label>
+                    <Input {...register(`bank_accounts.${index}.account_name`)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Account number</Label>
+                    <Input {...register(`bank_accounts.${index}.account_number`)} />
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeBank(index)} aria-label="Remove bank">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Invoice footer */}
+        <Card className="shadow-none dark:ring-0">
+          <CardHeader>
+            <CardTitle className="text-base">Invoice footer</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="invoice_footer_notes">Footer notes</Label>
+              <Textarea id="invoice_footer_notes" placeholder="Thank you for your business!" {...register("invoice_footer_notes")} />
             </div>
-          ))}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={upsertSettings.isPending} className="w-full sm:w-auto">
+            {upsertSettings.isPending ? "Saving..." : "Save settings"}
+          </Button>
         </div>
-
-        <Separator />
-
-        {/* Footer Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="invoice_footer_notes">Invoice Footer Notes</Label>
-          <Textarea id="invoice_footer_notes" placeholder="Thank you for your business!" {...register("invoice_footer_notes")} />
-        </div>
-
-        <Button type="submit" disabled={upsertSettings.isPending}>
-          {upsertSettings.isPending ? "Saving..." : "Save Settings"}
-        </Button>
       </form>
 
-      <Separator className="max-w-2xl" />
+      {/* Demo data */}
+      <Card className="shadow-none dark:ring-0">
+        <CardHeader>
+          <CardTitle className="text-base">Demo data</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Replace your data with a curated set of demo clients, invoices, expenses, and recurring
+            templates. This wipes existing records for your account first.
+          </p>
+          <ConfirmDialog
+            trigger={
+              <Button type="button" variant="outline" disabled={seeding}>
+                <Database className="mr-2 h-4 w-4" />
+                {seeding ? "Seeding..." : "Load demo data"}
+              </Button>
+            }
+            title="Replace all data with demo data?"
+            description="This will delete your current clients, invoices, expenses, recurring templates, and settings, then create a fresh demo set. This cannot be undone."
+            actionLabel="Replace"
+            onConfirm={handleSeed}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-      <div className="space-y-3 max-w-2xl">
-        <h3 className="font-medium">Demo Data</h3>
-        <p className="text-sm text-muted-foreground">
-          Replace your data with a curated set of demo clients, invoices, expenses, and recurring
-          templates. This wipes existing records for your account first.
-        </p>
-        <ConfirmDialog
-          trigger={
-            <Button type="button" variant="outline" disabled={seeding}>
-              <Database className="h-4 w-4 mr-2" />
-              {seeding ? "Seeding..." : "Load demo data"}
-            </Button>
-          }
-          title="Replace all data with demo data?"
-          description="This will delete your current clients, invoices, expenses, recurring templates, and settings, then create a fresh demo set. This cannot be undone."
-          actionLabel="Replace"
-          onConfirm={handleSeed}
-        />
+function SettingsSkeleton() {
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-80" />
       </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Card key={i} className="shadow-none dark:ring-0">
+          <CardHeader>
+            <Skeleton className="h-4 w-40" />
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, f) => (
+              <div key={f} className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
