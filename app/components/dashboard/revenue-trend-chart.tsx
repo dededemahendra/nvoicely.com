@@ -154,7 +154,7 @@ export function RevenueTrendChart({
               fill={`url(#${gradientId})`}
               stroke="var(--color-revenue)"
               strokeWidth={2}
-              type="natural"
+              type="monotone"
             />
           </AreaChart>
         </ChartContainer>
