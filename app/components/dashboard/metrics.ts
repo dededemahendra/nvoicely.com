@@ -71,12 +71,10 @@ export function useDashboardMetrics(userId: string) {
         if (paid >= thisMonthStart) thisMonth += v;
         else if (paid >= lastMonthStart && paid < thisMonthStart) lastMonth += v;
       });
+    // null = no prior-month revenue to compare against (avoids a misleading
+    // flat "+100%" for the first month with any income).
     const deltaPct =
-      lastMonth > 0
-        ? ((thisMonth - lastMonth) / lastMonth) * 100
-        : thisMonth > 0
-        ? 100
-        : 0;
+      lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : null;
 
     // ----- Outstanding / overdue -----
     const sent = list.filter((i) => i.status === "sent");

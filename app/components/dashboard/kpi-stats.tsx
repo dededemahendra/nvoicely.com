@@ -9,13 +9,21 @@ import { Delta, DeltaIcon, DeltaValue } from "~/components/delta";
 import { formatCurrency } from "~/lib/currency";
 import type { DashboardMetrics } from "./metrics";
 
+type Card = {
+  label: string;
+  value: string;
+  footnote: string;
+  delta?: number | null;
+};
+
 export function KpiStats({ metrics }: { metrics: DashboardMetrics }) {
-  const cards = [
+  const cards: Card[] = [
     {
       label: "This month",
       value: formatCurrency(metrics.thisMonth, "IDR"),
       delta: metrics.deltaPct,
-      footnote: "vs last month",
+      footnote:
+        metrics.deltaPct === null ? "no prior-month revenue" : "vs last month",
     },
     {
       label: "Outstanding",
@@ -46,7 +54,7 @@ export function KpiStats({ metrics }: { metrics: DashboardMetrics }) {
           <CardContent className="flex flex-col gap-2">
             <p className="font-display text-2xl tabular-nums">{c.value}</p>
             <div className="flex items-center gap-1 text-xs">
-              {c.delta !== undefined && (
+              {c.delta != null && (
                 <Delta value={c.delta}>
                   <DeltaIcon />
                   <DeltaValue />
