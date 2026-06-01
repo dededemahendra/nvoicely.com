@@ -3,6 +3,8 @@
 /* Premium Ledger — fintech-inspired warm cream + forest green system */
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   /* Base surfaces — warm cream paper, not cold white */
   --color-background: #f8f6f1;
@@ -20,7 +22,11 @@
   --color-sidebar: #142620;
   --color-sidebar-foreground: #d8d0bd;
   --color-sidebar-accent: #1f3a30;
+  --color-sidebar-accent-foreground: #d8d0bd;
   --color-sidebar-border: #1f3128;
+  --color-sidebar-primary: #1c3d2f;
+  --color-sidebar-primary-foreground: #f4ede0;
+  --color-sidebar-ring: #1c3d2f;
 
   --color-secondary: #efece4;
   --color-secondary-foreground: #1c3d2f;
