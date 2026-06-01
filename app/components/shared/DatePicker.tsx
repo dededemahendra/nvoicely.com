@@ -26,8 +26,13 @@ export function DatePicker({
   disabled,
 }: DatePickerProps) {
   // Parse as local midnight to avoid the date shifting a day across timezones.
-  const date = value ? new Date(`${value}T00:00:00`) : undefined;
+  // Slice to date-only so a full ISO string can't produce an invalid date.
+  const parsed = value ? new Date(`${value.slice(0, 10)}T00:00:00`) : undefined;
+  const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : undefined;
   const thisYear = new Date().getFullYear();
+  const selectedYear = date ? date.getFullYear() : thisYear;
+  const minYear = Math.min(thisYear - 5, selectedYear);
+  const maxYear = Math.max(thisYear + 5, selectedYear);
 
   return (
     <Popover>
@@ -50,10 +55,13 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={(d) => onChange(d ? format(d, "yyyy-MM-dd") : "")}
+          onSelect={(d) => {
+            // Ignore deselect (re-click) so a required date field isn't cleared.
+            if (d) onChange(format(d, "yyyy-MM-dd"));
+          }}
           captionLayout="dropdown"
-          startMonth={new Date(thisYear - 5, 0)}
-          endMonth={new Date(thisYear + 5, 11)}
+          startMonth={new Date(minYear, 0)}
+          endMonth={new Date(maxYear, 11)}
           defaultMonth={date}
           autoFocus
         />

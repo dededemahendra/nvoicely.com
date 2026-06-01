@@ -108,7 +108,7 @@ export function InvoiceForm({ clients, defaultValues, onSubmit, isSubmitting }: 
               <DatePicker
                 id="issue_date"
                 value={watch("issue_date")}
-                onChange={(v) => setValue("issue_date", v, { shouldValidate: true })}
+                onChange={(v) => setValue("issue_date", v, { shouldValidate: true, shouldDirty: true })}
                 placeholder="Select issue date"
               />
               {errors.issue_date && <p className="text-xs text-destructive">{errors.issue_date.message}</p>}
@@ -119,7 +119,7 @@ export function InvoiceForm({ clients, defaultValues, onSubmit, isSubmitting }: 
               <DatePicker
                 id="due_date"
                 value={watch("due_date")}
-                onChange={(v) => setValue("due_date", v, { shouldValidate: true })}
+                onChange={(v) => setValue("due_date", v, { shouldValidate: true, shouldDirty: true })}
                 placeholder="Select due date"
               />
               {errors.due_date && <p className="text-xs text-destructive">{errors.due_date.message}</p>}
