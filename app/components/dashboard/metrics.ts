@@ -133,7 +133,7 @@ export function useDashboardMetrics(userId: string) {
     const recentInvoices: RecentInvoiceRow[] = list.slice(0, 5).map((i) => ({
       id: i.$id,
       invoiceNumber: i.invoice_number,
-      clientName: clientName.get(i.client_id) ?? "—",
+      clientName: clientName.get(i.client_id) ?? "Unknown",
       status: effectiveStatus(i, now),
       total: i.total,
       currency: i.currency,
