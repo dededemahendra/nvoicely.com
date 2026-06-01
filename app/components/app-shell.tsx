@@ -1,7 +1,7 @@
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { AppHeader } from "~/components/app-header";
 import { AppSidebar } from "~/components/app-sidebar";
-import { BottomTabBar } from "~/components/shared/BottomTabBar";
+import { MobileDock } from "~/components/shared/MobileDock";
 
 export function AppShell({
   user,
@@ -22,7 +22,7 @@ export function AppShell({
             </div>
           </div>
         </SidebarInset>
-        <BottomTabBar />
+        <MobileDock />
       </SidebarProvider>
     </div>
   );
