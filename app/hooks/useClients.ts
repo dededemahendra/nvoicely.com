@@ -4,16 +4,30 @@ import { DB_ID, COLLECTIONS } from "~/lib/constants";
 import type { Client } from "~/types";
 import type { ClientFormValues } from "~/lib/validators/client";
 
+const PAGE_FETCH = 100;
+
 export function useClients(userId: string) {
   return useQuery({
     queryKey: ["clients", userId],
     queryFn: async () => {
-      const res = await databases.listDocuments(DB_ID, COLLECTIONS.CLIENTS, [
-        Query.equal("user_id", userId),
-        Query.orderDesc("$createdAt"),
-        Query.limit(100),
-      ]);
-      return res.documents as unknown as Client[];
+      // Fetch the full set (search + pagination are client-side); page past
+      // Appwrite's per-request cap with a cursor. $id tiebreaks the cursor.
+      const docs: Record<string, unknown>[] = [];
+      let cursor: string | undefined;
+      for (;;) {
+        const queries = [
+          Query.equal("user_id", userId),
+          Query.orderDesc("$createdAt"),
+          Query.orderDesc("$id"),
+          Query.limit(PAGE_FETCH),
+        ];
+        if (cursor) queries.push(Query.cursorAfter(cursor));
+        const res = await databases.listDocuments(DB_ID, COLLECTIONS.CLIENTS, queries);
+        docs.push(...res.documents);
+        if (res.documents.length < PAGE_FETCH) break;
+        cursor = res.documents[res.documents.length - 1].$id;
+      }
+      return docs as unknown as Client[];
     },
     enabled: !!userId,
   });

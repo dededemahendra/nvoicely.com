@@ -28,8 +28,11 @@ function NewClientPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="New Client" />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <PageHeader
+        title="New client"
+        description="Add a client you can bill on invoices."
+      />
       <ClientForm onSubmit={handleSubmit} isSubmitting={createClient.isPending} />
     </div>
   );
