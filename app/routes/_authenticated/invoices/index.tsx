@@ -1,8 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus, Trash2, Eye, Send, Download } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Eye,
+  Send,
+  Download,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { StatusBadge } from "~/components/shared/StatusBadge";
 import { ListCard } from "~/components/shared/ListCard";
@@ -14,6 +40,7 @@ import { formatCurrency } from "~/lib/currency";
 import { toCsv, downloadCsv } from "~/lib/csv";
 import { toast } from "sonner";
 import { cn } from "~/lib/utils";
+import type { InvoiceStatus } from "~/types";
 
 export const Route = createFileRoute("/_authenticated/invoices/")({
   component: InvoicesPage,
@@ -28,6 +55,8 @@ const FILTERS = [
 ] as const;
 
 type Filter = (typeof FILTERS)[number]["value"];
+
+const PAGE_SIZE = 20;
 
 function InvoicesPage() {
   const { user } = Route.useRouteContext();
@@ -52,9 +81,9 @@ function InvoicesPage() {
       }
     );
   }
-  function getDisplayStatus(inv: { status: string; due_date: string }) {
+  function getDisplayStatus(inv: { status: string; due_date: string }): InvoiceStatus {
     if (inv.status === "sent" && new Date(inv.due_date) < new Date()) return "overdue";
-    return inv.status as any;
+    return inv.status as InvoiceStatus;
   }
 
   const counts = useMemo(() => {
@@ -75,48 +104,54 @@ function InvoicesPage() {
     return (invoices ?? []).filter((inv) => getDisplayStatus(inv) === filter);
   }, [invoices, filter]);
 
+  // Client-side pagination of the filtered view.
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [filter]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  function exportCsv() {
+    const rows = (invoices ?? []).map((inv) => ({
+      invoice_number: inv.invoice_number,
+      client: clientName(inv.client_id),
+      status: inv.status,
+      issue_date: inv.issue_date.slice(0, 10),
+      due_date: inv.due_date.slice(0, 10),
+      currency: inv.currency,
+      subtotal: inv.subtotal,
+      tax_amount: inv.tax_amount,
+      total: inv.total,
+    }));
+    const csv = toCsv(rows, [
+      { key: "invoice_number", header: "Invoice #" },
+      { key: "client", header: "Client" },
+      { key: "status", header: "Status" },
+      { key: "issue_date", header: "Issue Date" },
+      { key: "due_date", header: "Due Date" },
+      { key: "currency", header: "Currency" },
+      { key: "subtotal", header: "Subtotal" },
+      { key: "tax_amount", header: "Tax" },
+      { key: "total", header: "Total" },
+    ]);
+    downloadCsv(`invoices-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+  }
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Workspace"
         title="Invoices"
         description="Create, send, and track every invoice."
         action={
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!invoices?.length}
-              onClick={() => {
-                const rows = (invoices ?? []).map((inv) => ({
-                  invoice_number: inv.invoice_number,
-                  client: clientName(inv.client_id),
-                  status: inv.status,
-                  issue_date: inv.issue_date.slice(0, 10),
-                  due_date: inv.due_date.slice(0, 10),
-                  currency: inv.currency,
-                  subtotal: inv.subtotal,
-                  tax_amount: inv.tax_amount,
-                  total: inv.total,
-                }));
-                const csv = toCsv(rows, [
-                  { key: "invoice_number", header: "Invoice #" },
-                  { key: "client", header: "Client" },
-                  { key: "status", header: "Status" },
-                  { key: "issue_date", header: "Issue Date" },
-                  { key: "due_date", header: "Due Date" },
-                  { key: "currency", header: "Currency" },
-                  { key: "subtotal", header: "Subtotal" },
-                  { key: "tax_amount", header: "Tax" },
-                  { key: "total", header: "Total" },
-                ]);
-                downloadCsv(`invoices-${new Date().toISOString().slice(0, 10)}.csv`, csv);
-              }}
-            >
+            <Button variant="outline" size="sm" disabled={!invoices?.length} onClick={exportCsv}>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Export CSV</span>
             </Button>
-            <Button asChild>
+            <Button asChild size="sm">
               <Link to="/invoices/new">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">New invoice</span>
@@ -127,8 +162,8 @@ function InvoicesPage() {
         }
       />
 
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Segmented filter */}
+      <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-muted p-1">
         {FILTERS.map((f) => {
           const active = filter === f.value;
           return (
@@ -136,19 +171,14 @@ function InvoicesPage() {
               key={f.value}
               onClick={() => setFilter(f.value)}
               className={cn(
-                "group flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] transition-all",
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {f.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 py-0 text-[9px] tabular-nums",
-                  active ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}
-              >
+              <span className="text-xs tabular-nums text-muted-foreground">
                 {counts[f.value]}
               </span>
             </button>
@@ -157,31 +187,80 @@ function InvoicesPage() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
-          ))}
-        </div>
+        <>
+          {/* Mobile skeleton */}
+          <div className="space-y-2 lg:hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-lg border bg-card p-4"
+              >
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table skeleton */}
+          <Card className="hidden shadow-none lg:block dark:ring-0">
+            <CardContent className="p-0">
+              <div className="grid grid-cols-[140px_1fr_120px_120px_110px_140px_90px] gap-4 border-b px-6 py-3">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <Skeleton key={i} className="h-3 w-14" />
+                ))}
+              </div>
+              {Array.from({ length: 6 }).map((_, r) => (
+                <div
+                  key={r}
+                  className="grid grid-cols-[140px_1fr_120px_120px_110px_140px_90px] items-center gap-4 border-b px-6 py-4 last:border-0"
+                >
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-20 justify-self-end" />
+                  <Skeleton className="h-7 w-7 justify-self-end rounded-md" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
       ) : !filtered.length ? (
-        <div className="rounded-xl border border-border/60 bg-card p-12 text-center">
-          <p className="font-display text-2xl">Nothing here yet.</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {filter === "all" ? "Create your first invoice to get started." : `No ${filter} invoices.`}
-          </p>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileText />
+            </EmptyMedia>
+            <EmptyTitle>
+              {filter === "all" ? "No invoices yet" : `No ${filter} invoices`}
+            </EmptyTitle>
+            <EmptyDescription>
+              {filter === "all"
+                ? "Create your first invoice to get started."
+                : "No invoices match this filter."}
+            </EmptyDescription>
+          </EmptyHeader>
           {filter === "all" && (
-            <Button asChild className="mt-6">
-              <Link to="/invoices/new">
-                <Plus className="mr-1 h-4 w-4" />
-                New invoice
-              </Link>
-            </Button>
+            <EmptyContent>
+              <Button asChild>
+                <Link to="/invoices/new">
+                  <Plus className="h-4 w-4" />
+                  New invoice
+                </Link>
+              </Button>
+            </EmptyContent>
           )}
-        </div>
+        </Empty>
       ) : (
         <>
           {/* Mobile cards */}
           <div className="space-y-2 lg:hidden">
-            {filtered.map((inv) => (
+            {pageItems.map((inv) => (
               <ListCard
                 key={inv.$id}
                 to="/invoices/$id"
@@ -228,87 +307,124 @@ function InvoicesPage() {
             ))}
           </div>
 
-          {/* Desktop editorial table */}
-          <div className="hidden overflow-hidden rounded-xl border border-border/60 bg-card lg:block">
-            {/* Header row */}
-            <div className="grid grid-cols-[140px_1fr_120px_120px_110px_140px_110px] gap-4 border-b border-border/60 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-              <span>Invoice</span>
-              <span>Client</span>
-              <span>Issued</span>
-              <span>Due</span>
-              <span>Status</span>
-              <span className="text-right">Amount</span>
-              <span />
-            </div>
-            <ul className="divide-y divide-border/60">
-              {filtered.map((inv) => (
-                <li
-                  key={inv.$id}
-                  className="group relative grid grid-cols-[140px_1fr_120px_120px_110px_140px_110px] items-center gap-4 px-6 py-4 transition-colors hover:bg-accent/30"
+          {/* Desktop table */}
+          <Card className="hidden shadow-none lg:block dark:ring-0">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Invoice</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Issued</TableHead>
+                    <TableHead>Due</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="pr-6" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pageItems.map((inv) => (
+                    <TableRow key={inv.$id} className="h-14">
+                      <TableCell className="pl-6">
+                        <Link
+                          to="/invoices/$id"
+                          params={{ id: inv.$id }}
+                          className="font-mono text-sm hover:underline"
+                        >
+                          {inv.invoice_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="max-w-44 truncate">
+                        {clientName(inv.client_id)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(inv.issue_date), "dd MMM yyyy")}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(inv.due_date), "dd MMM yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={getDisplayStatus(inv)} />
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm tabular-nums">
+                        {formatCurrency(inv.total, inv.currency)}
+                      </TableCell>
+                      <TableCell className="pr-6">
+                        <div className="flex items-center justify-end gap-0.5">
+                          <Button variant="ghost" size="icon-sm" asChild>
+                            <Link to="/invoices/$id" params={{ id: inv.$id }} aria-label="View">
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          {inv.status === "draft" && clientEmail(inv.client_id) && (
+                            <ConfirmDialog
+                              trigger={
+                                <Button variant="ghost" size="icon-sm" disabled={sendInvoice.isPending} aria-label="Send">
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              }
+                              title={`Send invoice ${inv.invoice_number}?`}
+                              description={`Email it to ${clientEmail(inv.client_id)} and mark as sent.`}
+                              actionLabel="Send"
+                              onConfirm={() => handleSend(inv.$id)}
+                            />
+                          )}
+                          {inv.status === "draft" && (
+                            <ConfirmDialog
+                              trigger={
+                                <Button variant="ghost" size="icon-sm" aria-label="Delete">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              }
+                              title="Delete invoice?"
+                              description={`Delete ${inv.invoice_number}? This cannot be undone.`}
+                              onConfirm={() =>
+                                deleteInvoice.mutate(inv.$id, {
+                                  onSuccess: () => toast.success("Invoice deleted"),
+                                })
+                              }
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+              <p className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * PAGE_SIZE + 1} to{" "}
+                {Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  <Link
-                    to="/invoices/$id"
-                    params={{ id: inv.$id }}
-                    className="absolute inset-0"
-                    aria-label={`View ${inv.invoice_number}`}
-                  />
-                  <span className="font-mono text-sm">{inv.invoice_number}</span>
-                  <span className="truncate text-sm">{clientName(inv.client_id)}</span>
-                  <span className="font-mono text-xs text-muted-foreground">
-                    {format(new Date(inv.issue_date), "dd MMM yyyy")}
-                  </span>
-                  <span className="font-mono text-xs text-muted-foreground">
-                    {format(new Date(inv.due_date), "dd MMM yyyy")}
-                  </span>
-                  <span>
-                    <StatusBadge status={getDisplayStatus(inv)} />
-                  </span>
-                  <span className="text-right font-mono text-sm tabular-nums">
-                    {formatCurrency(inv.total, inv.currency)}
-                  </span>
-                  <div
-                    className="relative z-10 flex items-center justify-end gap-0.5"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link to="/invoices/$id" params={{ id: inv.$id }}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    {inv.status === "draft" && clientEmail(inv.client_id) && (
-                      <ConfirmDialog
-                        trigger={
-                          <Button variant="ghost" size="icon" disabled={sendInvoice.isPending}>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        }
-                        title={`Send invoice ${inv.invoice_number}?`}
-                        description={`Email it to ${clientEmail(inv.client_id)} and mark as sent.`}
-                        actionLabel="Send"
-                        onConfirm={() => handleSend(inv.$id)}
-                      />
-                    )}
-                    {inv.status === "draft" && (
-                      <ConfirmDialog
-                        trigger={
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        }
-                        title="Delete invoice?"
-                        description={`Delete ${inv.invoice_number}? This cannot be undone.`}
-                        onConfirm={() =>
-                          deleteInvoice.mutate(inv.$id, {
-                            onSuccess: () => toast.success("Invoice deleted"),
-                          })
-                        }
-                      />
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="text-sm tabular-nums text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
