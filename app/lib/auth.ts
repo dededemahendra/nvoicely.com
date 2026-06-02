@@ -30,13 +30,8 @@ export async function verifyEmailCode(userId: string, code: string) {
   return account.createSession(userId, code);
 }
 
-// ----- Passwordless: magic link -----
-export async function sendMagicLink(email: string) {
-  const url = `${window.location.origin}/auth/verify`;
-  await account.createMagicURLToken(ID.unique(), email, url);
-}
-
-// Used by the magic-link callback route.
+// Used by the /auth/verify link in the sign-in email. The email's magic link
+// embeds the same OTP as the secret, so this just creates the session.
 export async function createSessionFromToken(userId: string, secret: string) {
   await clearStaleSession();
   return account.createSession(userId, secret);

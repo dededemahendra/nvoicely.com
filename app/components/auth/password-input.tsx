@@ -13,14 +13,14 @@ export const PasswordInput = React.forwardRef<
       <Input
         ref={ref}
         type={show ? "text" : "password"}
-        className={cn("pr-10", className)}
+        className={cn("pr-12", className)}
         {...props}
       />
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Hide password" : "Show password"}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
       >
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
