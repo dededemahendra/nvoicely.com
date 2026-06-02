@@ -84,7 +84,7 @@ function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in to Ledger"
+      title="Sign in to Nvoicely"
       subtitle="Continue with email and we'll send you a code or a magic link."
       footer="New here? Just enter your email and we'll create your account."
     >

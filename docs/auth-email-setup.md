@@ -37,7 +37,7 @@ Appwrite Console → your project → **Settings → SMTP** → enable custom SM
 
 | Field | Value |
 |---|---|
-| Sender name | e.g. `Ledger` |
+| Sender name | e.g. `Nvoicely` |
 | Sender email | `noreply@yourdomain.com` (must be on the verified domain) |
 | Host | `smtp.resend.com` |
 | Port | `465` (SSL) or `587` (TLS) |
@@ -71,9 +71,12 @@ Appwrite Console → **Auth → Templates → OTP** (the email sent by
 
 ## 4. Google sign-in
 
-The login page already has **Continue with Google** wired up
-(`loginWithGoogle()` → `account.createOAuth2Session`). It redirects to `/` on
-success and back to `/login` on failure. You just need to enable the provider.
+The login page already has **Continue with Google** wired up. It uses the OAuth
+**token** flow (`account.createOAuth2Token`): Appwrite redirects back to
+`/auth/verify?userId&secret`, where the session is created client-side. This
+avoids the cross-domain third-party-cookie problem that leaves a plain
+`createOAuth2Session` redirect unauthenticated (you'd land back on `/login`).
+You just need to enable the provider.
 
 ### 4a. Create a Google OAuth client
 
@@ -89,13 +92,19 @@ success and back to `/login` on failure. You just need to enable the provider.
    https://<APPWRITE_ENDPOINT>/v1/account/sessions/oauth2/callback/google/<PROJECT_ID>
    ```
    e.g. `https://cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/<PROJECT_ID>`
-5. Copy the **Client ID** and **Client Secret**.
+5. Add **Authorized JavaScript origins**: your Appwrite endpoint origin
+   (`https://<APPWRITE_ENDPOINT host>`, no `/v1`) plus your app origins
+   (`http://localhost:5173`, `https://nvoicely.com`).
+6. Copy the **Client ID** and **Client Secret**. The secret is on the client's
+   detail page (the list view shows only the ID) — open the client, copy
+   **Client secret**, or **Download JSON** which contains `client_secret`.
 
 ### 4b. Enable Google in Appwrite
 
 Appwrite Console → **Auth → Settings → OAuth2 Providers → Google** → toggle on:
 - **App ID** = Google **Client ID**
-- **App Secret** = Google **Client Secret**
+- **App Secret** = Google **Client Secret** (required — a missing secret causes
+  `invalid_request: client_secret is missing` after consent)
 
 Appwrite shows the callback URL to paste back into step 4a if you haven't already.
 
