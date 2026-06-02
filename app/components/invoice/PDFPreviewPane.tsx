@@ -47,6 +47,7 @@ export function PDFPreviewPane({ invoice, client, settings }: PDFPreviewPaneProp
         }
         return (
           <iframe
+            key={invoice.$id}
             src={url}
             title={`Invoice ${invoice.invoice_number}`}
             className="w-full rounded-md border bg-white"

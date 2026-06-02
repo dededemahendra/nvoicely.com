@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { setTheme, type Theme } from "~/lib/theme";
 
@@ -25,11 +25,11 @@ function ContrastIcon() {
 }
 
 export function ThemeToggle() {
-  const [theme, setThemeState] = useState<Theme>("light");
-
-  useEffect(() => {
-    setThemeState(document.documentElement.classList.contains("dark") ? "dark" : "light");
-  }, []);
+  const [theme, setThemeState] = useState<Theme>(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light"
+  );
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
