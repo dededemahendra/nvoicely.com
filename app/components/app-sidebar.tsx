@@ -12,6 +12,7 @@ import {
 } from "~/components/ui/sidebar";
 import { primaryNav } from "~/components/shared/nav";
 import { NavUser } from "~/components/nav-user";
+import { Folder } from "~/components/ui/folder-components";
 
 export function AppSidebar({ user }: { user: { name: string; email: string } }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -25,15 +26,8 @@ export function AppSidebar({ user }: { user: { name: string; email: string } }) 
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
               <Link to="/">
-                <span className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary font-display text-lg leading-none text-primary-foreground">
-                  N
-                </span>
-                <span className="flex items-baseline gap-1">
-                  <span className="font-display text-xl leading-none">Nvoicely</span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    ·co
-                  </span>
-                </span>
+                <Folder color="brand" size="xs" className="shrink-0" />
+                <span className="font-display text-xl leading-none">Nvoicely</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
