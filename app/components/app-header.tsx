@@ -4,6 +4,7 @@ import { Separator } from "~/components/ui/separator";
 import { AppBreadcrumbs } from "~/components/app-breadcrumbs";
 import { CustomSidebarTrigger } from "~/components/custom-sidebar-trigger";
 import { GlobalSearch } from "~/components/shared/GlobalSearch";
+import { ThemeToggle } from "~/components/shared/ThemeToggle";
 import { primaryNav, secondaryNav } from "~/components/shared/nav";
 
 const allNav = [...primaryNav, ...secondaryNav];
@@ -29,8 +30,9 @@ export function AppHeader({ userId }: { userId: string }) {
         orientation="vertical"
       />
       <AppBreadcrumbs page={title ? { title } : null} />
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
         <GlobalSearch userId={userId} />
+        <ThemeToggle />
       </div>
     </header>
   );
