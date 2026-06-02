@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { loginWithGoogle } from "~/lib/auth";
@@ -21,12 +20,6 @@ export function AuthLayout({
       <div className="w-full max-w-sm">
         <Card className="shadow-sm">
           <CardHeader className="space-y-1 text-center">
-            <Link to="/" className="mx-auto mb-2 inline-flex items-baseline gap-1" aria-label="Nvoicely home">
-              <span className="font-display text-2xl leading-none">Nvoicely</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                ·co
-              </span>
-            </Link>
             <CardTitle className="text-xl">{title}</CardTitle>
             <CardDescription>{subtitle}</CardDescription>
           </CardHeader>
