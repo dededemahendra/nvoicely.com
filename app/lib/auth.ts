@@ -49,7 +49,11 @@ export async function logout() {
 
 // ----- Google OAuth -----
 // Requires the Google provider enabled in the Appwrite console.
+// Uses the OAuth *token* flow (not session): Appwrite redirects back to
+// /auth/verify with ?userId&secret, where we create the session client-side.
+// This avoids the cross-domain third-party-cookie issue that leaves a plain
+// createOAuth2Session redirect unauthenticated.
 export function loginWithGoogle() {
   const origin = window.location.origin;
-  account.createOAuth2Session(OAuthProvider.Google, `${origin}/`, `${origin}/login`);
+  account.createOAuth2Token(OAuthProvider.Google, `${origin}/auth/verify`, `${origin}/login`);
 }
