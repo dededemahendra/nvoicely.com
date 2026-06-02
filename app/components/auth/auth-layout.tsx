@@ -21,8 +21,8 @@ export function AuthLayout({
       <div className="w-full max-w-sm">
         <Card className="shadow-sm">
           <CardHeader className="space-y-1 text-center">
-            <Link to="/" className="mx-auto mb-2 inline-flex items-baseline gap-1" aria-label="Ledger home">
-              <span className="font-display text-2xl leading-none">Ledger</span>
+            <Link to="/" className="mx-auto mb-2 inline-flex items-baseline gap-1" aria-label="Nvoicely home">
+              <span className="font-display text-2xl leading-none">Nvoicely</span>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 ·co
               </span>

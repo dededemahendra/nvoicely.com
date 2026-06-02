@@ -41,7 +41,7 @@ function LoginPage() {
       subtitle="Sign in to your workspace"
       footer={
         <>
-          New to Ledger?{" "}
+          New to Nvoicely?{" "}
           <Link to="/register" className="font-medium text-foreground underline underline-offset-4">
             Create an account
           </Link>

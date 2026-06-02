@@ -26,10 +26,10 @@ export function AppSidebar({ user }: { user: { name: string; email: string } }) 
             <SidebarMenuButton asChild size="lg">
               <Link to="/">
                 <span className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary font-display text-lg leading-none text-primary-foreground">
-                  L
+                  N
                 </span>
                 <span className="flex items-baseline gap-1">
-                  <span className="font-display text-xl leading-none">Ledger</span>
+                  <span className="font-display text-xl leading-none">Nvoicely</span>
                   <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     ·co
                   </span>
