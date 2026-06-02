@@ -2,6 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Send, CheckCircle, Pencil, FileDown, XCircle, ArrowLeft } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import { StatusBadge } from "~/components/shared/StatusBadge";
 import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -9,6 +18,7 @@ import { useInvoice, useUpdateInvoiceStatus } from "~/hooks/useInvoices";
 import { useClient } from "~/hooks/useClients";
 import { formatCurrency } from "~/lib/currency";
 import { toast } from "sonner";
+import type { InvoiceStatus } from "~/types";
 
 export const Route = createFileRoute("/_authenticated/invoices/$id")({
   component: InvoiceDetailPage,
@@ -20,10 +30,10 @@ function InvoiceDetailPage() {
   const { data: client } = useClient(invoice?.client_id ?? "");
   const updateStatus = useUpdateInvoiceStatus();
 
-  if (isLoading) return <Skeleton className="h-96 w-full" />;
-  if (!invoice) return <p>Invoice not found</p>;
+  if (isLoading) return <DetailSkeleton />;
+  if (!invoice) return <p className="text-sm text-muted-foreground">Invoice not found.</p>;
 
-  const displayStatus =
+  const displayStatus: InvoiceStatus =
     invoice.status === "sent" && new Date(invoice.due_date) < new Date()
       ? "overdue"
       : invoice.status;
@@ -39,29 +49,25 @@ function InvoiceDetailPage() {
   }
 
   return (
-    <div className="space-y-10">
-      {/* Back link */}
+    <div className="space-y-6">
       <Link
         to="/invoices"
-        className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-3 w-3" />
-        Invoices
+        <ArrowLeft className="h-4 w-4" />
+        Back to invoices
       </Link>
 
       {/* Header */}
-      <header className="flex flex-col gap-6 border-b border-border/60 pb-10 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Invoice
-            </p>
-            <StatusBadge status={displayStatus as any} />
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-3xl tracking-tight md:text-4xl">
+              {invoice.invoice_number}
+            </h1>
+            <StatusBadge status={displayStatus} />
           </div>
-          <h1 className="mt-3 font-display text-5xl leading-[0.95] tracking-tight md:text-6xl">
-            {invoice.invoice_number}
-          </h1>
-          <p className="mt-4 font-mono text-xs text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             Issued {format(new Date(invoice.issue_date), "dd MMM yyyy")} · Due{" "}
             {format(new Date(invoice.due_date), "dd MMM yyyy")}
           </p>
@@ -72,12 +78,12 @@ function InvoiceDetailPage() {
             <>
               <Button variant="outline" asChild>
                 <Link to="/invoices/$id/edit" params={{ id }}>
-                  <Pencil className="h-4 w-4 mr-2" />
+                  <Pencil className="h-4 w-4" />
                   Edit
                 </Link>
               </Button>
               <Button onClick={() => handleStatusChange("sent")} disabled={updateStatus.isPending}>
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="h-4 w-4" />
                 Mark as sent
               </Button>
             </>
@@ -85,13 +91,13 @@ function InvoiceDetailPage() {
           {(invoice.status === "sent" || displayStatus === "overdue") && (
             <>
               <Button onClick={() => handleStatusChange("paid")} disabled={updateStatus.isPending}>
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4" />
                 Mark as paid
               </Button>
               <ConfirmDialog
                 trigger={
                   <Button variant="outline">
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className="h-4 w-4" />
                     Cancel
                   </Button>
                 }
@@ -103,168 +109,185 @@ function InvoiceDetailPage() {
           )}
           <Button variant="outline" asChild>
             <Link to="/invoices/$id/preview" params={{ id }}>
-              <FileDown className="h-4 w-4 mr-2" />
+              <FileDown className="h-4 w-4" />
               Preview PDF
             </Link>
           </Button>
         </div>
-      </header>
+      </div>
 
-      {/* Bill-to + meta */}
-      <section className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Billed to
-          </p>
-          <p className="mt-3 font-display text-2xl">{client?.name ?? "Unknown"}</p>
-          {client?.company && (
-            <p className="mt-1 text-sm text-muted-foreground">{client.company}</p>
-          )}
-          <div className="mt-3 space-y-0.5 text-sm text-muted-foreground">
-            {client?.email && <p>{client.email}</p>}
-            {client?.phone && <p>{client.phone}</p>}
-            {client?.address_line1 && <p>{client.address_line1}</p>}
-            {client?.city && (
-              <p>
-                {client.city}
-                {client.country ? `, ${client.country}` : ""}
-              </p>
-            )}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Main: line items + totals */}
+        <div className="space-y-4 lg:col-span-2">
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Line items</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Description</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Unit price</TableHead>
+                    <TableHead className="text-right">Tax</TableHead>
+                    <TableHead className="pr-6 text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoice.line_items.map((item) => (
+                    <TableRow key={item.id} className="hover:bg-transparent">
+                      <TableCell className="pl-6">{item.description}</TableCell>
+                      <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
+                      <TableCell className="text-right font-mono text-sm tabular-nums">
+                        {formatCurrency(item.unit_price, invoice.currency)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {item.tax_rate}%
+                      </TableCell>
+                      <TableCell className="pr-6 text-right font-mono text-sm tabular-nums">
+                        {formatCurrency(item.amount, invoice.currency)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Totals */}
+          <div className="flex justify-end">
+            <Card className="w-full shadow-none sm:max-w-xs dark:ring-0">
+              <CardContent className="space-y-3 p-5 text-sm">
+                <Row label="Subtotal" value={formatCurrency(invoice.subtotal, invoice.currency)} />
+                <Row label="Tax" value={formatCurrency(invoice.tax_amount, invoice.currency)} />
+                {(invoice.discount_amount ?? 0) > 0 && (
+                  <Row
+                    label="Discount"
+                    value={`−${formatCurrency(invoice.discount_amount!, invoice.currency)}`}
+                    className="text-success"
+                  />
+                )}
+                <div className="flex items-baseline justify-between border-t pt-3">
+                  <span className="text-muted-foreground">Total</span>
+                  <span className="font-display text-2xl tabular-nums">
+                    {formatCurrency(invoice.total, invoice.currency)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        <dl className="grid grid-cols-2 gap-y-4 text-sm">
-          <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-            Currency
-          </dt>
-          <dd className="font-mono text-right">{invoice.currency}</dd>
+        {/* Sidebar: bill-to + details */}
+        <div className="space-y-4">
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Billed to</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1 text-sm">
+              <p className="font-medium text-foreground">{client?.name ?? "Unknown"}</p>
+              {client?.company && <p className="text-muted-foreground">{client.company}</p>}
+              {client?.email && <p className="text-muted-foreground">{client.email}</p>}
+              {client?.phone && <p className="text-muted-foreground">{client.phone}</p>}
+              {client?.address_line1 && (
+                <p className="text-muted-foreground">{client.address_line1}</p>
+              )}
+              {client?.city && (
+                <p className="text-muted-foreground">
+                  {client.city}
+                  {client.country ? `, ${client.country}` : ""}
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-          <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-            Issue date
-          </dt>
-          <dd className="font-mono text-right">
-            {format(new Date(invoice.issue_date), "dd MMM yyyy")}
-          </dd>
-
-          <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-            Due date
-          </dt>
-          <dd className="font-mono text-right">
-            {format(new Date(invoice.due_date), "dd MMM yyyy")}
-          </dd>
-
-          {invoice.paid_at && (
-            <>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-success">
-                Paid on
-              </dt>
-              <dd className="font-mono text-right text-success">
-                {format(new Date(invoice.paid_at), "dd MMM yyyy")}
-              </dd>
-            </>
-          )}
-        </dl>
-      </section>
-
-      {/* Line items — editorial table */}
-      <section>
-        <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          Line items
-        </p>
-        <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
-          <div className="grid grid-cols-[1fr_70px_140px_70px_140px] gap-4 border-b border-border/60 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-            <span>Description</span>
-            <span className="text-right">Qty</span>
-            <span className="text-right">Unit price</span>
-            <span className="text-right">Tax</span>
-            <span className="text-right">Amount</span>
-          </div>
-          <ul className="divide-y divide-border/60">
-            {invoice.line_items.map((item) => (
-              <li
-                key={item.id}
-                className="grid grid-cols-[1fr_70px_140px_70px_140px] items-center gap-4 px-6 py-4 text-sm"
-              >
-                <span>{item.description}</span>
-                <span className="text-right font-mono tabular-nums">{item.quantity}</span>
-                <span className="text-right font-mono tabular-nums">
-                  {formatCurrency(item.unit_price, invoice.currency)}
-                </span>
-                <span className="text-right font-mono tabular-nums text-muted-foreground">
-                  {item.tax_rate}%
-                </span>
-                <span className="text-right font-mono tabular-nums">
-                  {formatCurrency(item.amount, invoice.currency)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <Card className="shadow-none dark:ring-0">
+            <CardHeader>
+              <CardTitle className="text-base">Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <Row label="Currency" value={invoice.currency} />
+              <Row label="Issue date" value={format(new Date(invoice.issue_date), "dd MMM yyyy")} />
+              <Row label="Due date" value={format(new Date(invoice.due_date), "dd MMM yyyy")} />
+              {invoice.paid_at && (
+                <Row
+                  label="Paid on"
+                  value={format(new Date(invoice.paid_at), "dd MMM yyyy")}
+                  className="text-success"
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
+      </div>
 
-        {/* Totals */}
-        <div className="mt-6 flex justify-end">
-          <dl className="w-full max-w-xs space-y-3 text-sm">
-            <div className="flex justify-between">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                Subtotal
-              </dt>
-              <dd className="font-mono tabular-nums">
-                {formatCurrency(invoice.subtotal, invoice.currency)}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                Tax
-              </dt>
-              <dd className="font-mono tabular-nums">
-                {formatCurrency(invoice.tax_amount, invoice.currency)}
-              </dd>
-            </div>
-            {(invoice.discount_amount ?? 0) > 0 && (
-              <div className="flex justify-between text-success">
-                <dt className="font-mono text-[10px] uppercase tracking-[0.15em]">Discount</dt>
-                <dd className="font-mono tabular-nums">
-                  −{formatCurrency(invoice.discount_amount!, invoice.currency)}
-                </dd>
-              </div>
-            )}
-            <div className="flex items-baseline justify-between border-t border-border pt-4">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Total
-              </dt>
-              <dd className="font-display text-3xl tabular-nums">
-                {formatCurrency(invoice.total, invoice.currency)}
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      {/* Notes & Terms */}
+      {/* Notes & terms */}
       {(invoice.notes || invoice.payment_terms) && (
-        <section className="grid gap-10 border-t border-border/60 pt-10 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {invoice.payment_terms && (
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Payment terms
-              </p>
-              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/80">
-                {invoice.payment_terms}
-              </p>
-            </div>
+            <Card className="shadow-none dark:ring-0">
+              <CardHeader>
+                <CardTitle className="text-base">Payment terms</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                  {invoice.payment_terms}
+                </p>
+              </CardContent>
+            </Card>
           )}
           {invoice.notes && (
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Notes
-              </p>
-              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/80">
-                {invoice.notes}
-              </p>
-            </div>
+            <Card className="shadow-none dark:ring-0">
+              <CardHeader>
+                <CardTitle className="text-base">Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{invoice.notes}</p>
+              </CardContent>
+            </Card>
           )}
-        </section>
+        </div>
       )}
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={`flex items-baseline justify-between gap-3 ${className ?? ""}`}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-4 w-32" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+        <Skeleton className="h-10 w-40" />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Skeleton className="h-72 lg:col-span-2" />
+        <div className="space-y-4">
+          <Skeleton className="h-36" />
+          <Skeleton className="h-36" />
+        </div>
+      </div>
     </div>
   );
 }
