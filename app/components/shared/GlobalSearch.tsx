@@ -44,8 +44,8 @@ export function GlobalSearch({ userId }: { userId: string }) {
         onClick={() => setOpen(true)}
         aria-label="Search"
         className={cn(
-          "inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-          "w-9 justify-center sm:w-56 sm:justify-start sm:px-3"
+          "inline-flex h-9 items-center gap-2 rounded-xl border border-input bg-transparent text-sm text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+          "w-9 justify-center sm:w-56 sm:justify-start sm:px-3.5"
         )}
       >
         <Search className="h-4 w-4" />
