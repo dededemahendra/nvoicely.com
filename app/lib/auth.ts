@@ -1,4 +1,5 @@
 import { account } from "~/lib/appwrite";
+import { OAuthProvider } from "appwrite";
 
 export async function getCurrentUser() {
   try {
@@ -26,4 +27,12 @@ export async function register(email: string, password: string, name: string) {
 
 export async function logout() {
   return await account.deleteSession("current");
+}
+
+// Redirects the browser to Google. Requires the Google OAuth provider to be
+// enabled in the Appwrite console; otherwise Appwrite redirects to the failure
+// URL (/login) without creating a session.
+export function loginWithGoogle() {
+  const origin = window.location.origin;
+  account.createOAuth2Session(OAuthProvider.Google, `${origin}/`, `${origin}/login`);
 }
