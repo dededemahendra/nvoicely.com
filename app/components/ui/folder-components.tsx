@@ -28,6 +28,7 @@ const sizeMap: Record<
     label: string;
     hoverY: number;
     hoverBackY: number;
+    hoverX: number;
   }
 > = {
   // Compact mark tuned for the sidebar/header logo slot.
@@ -42,8 +43,9 @@ const sizeMap: Record<
     paperH: "h-6",
     paperContent: "pt-1 px-1 space-y-0.5",
     label: "bottom-1 left-1 text-[6px] py-0 px-1",
-    hoverY: -4,
-    hoverBackY: -2,
+    hoverY: -5,
+    hoverBackY: -3,
+    hoverX: 7,
   },
   sm: {
     container: "size-24 rounded-[24px]",
@@ -56,8 +58,9 @@ const sizeMap: Record<
     paperH: "h-16",
     paperContent: "pt-2.5 px-2.5 space-y-1",
     label: "bottom-2 left-2 text-[9px] py-0.5 px-1.5",
-    hoverY: -3,
+    hoverY: -6,
     hoverBackY: -4,
+    hoverX: 16,
   },
   md: {
     container: "size-32 rounded-[32px]",
@@ -70,8 +73,9 @@ const sizeMap: Record<
     paperH: "h-24",
     paperContent: "pt-3 px-3 space-y-1",
     label: "bottom-3 left-3 text-[10px] py-0.5 px-1.5",
-    hoverY: -3,
+    hoverY: -8,
     hoverBackY: -5,
+    hoverX: 22,
   },
   lg: {
     container: "size-40 rounded-[40px]",
@@ -84,8 +88,9 @@ const sizeMap: Record<
     paperH: "h-30",
     paperContent: "pt-4 px-4 space-y-1.5",
     label: "bottom-4 left-4 text-xs py-1 px-2",
-    hoverY: -4,
+    hoverY: -10,
     hoverBackY: -6,
+    hoverX: 28,
   },
 };
 
@@ -225,8 +230,8 @@ export const Folder = ({
         {/* Back paper — fans right */}
         <motion.div
           variants={{
-            rest: { rotate: 2, y: 0, transition: spring },
-            hover: { rotate: 18, y: s.hoverBackY, transition: spring },
+            rest: { rotate: 3, x: 0, y: 0, transition: spring },
+            hover: { rotate: 24, x: s.hoverX, y: s.hoverBackY, transition: spring },
           }}
           style={{ originY: 1 }}
           className={cn(
@@ -239,8 +244,8 @@ export const Folder = ({
         {/* Back paper — fans left */}
         <motion.div
           variants={{
-            rest: { rotate: -2, y: 0, transition: spring },
-            hover: { rotate: -18, y: s.hoverBackY, transition: spring },
+            rest: { rotate: -3, x: 0, y: 0, transition: spring },
+            hover: { rotate: -24, x: -s.hoverX, y: s.hoverBackY, transition: spring },
           }}
           style={{ originY: 1 }}
           className={cn(

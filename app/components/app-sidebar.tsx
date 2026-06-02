@@ -24,7 +24,7 @@ export function AppSidebar({ user }: { user: { name: string; email: string } }) 
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
+            <SidebarMenuButton asChild size="lg" className="overflow-visible">
               <Link to="/">
                 <Folder color="brand" size="xs" className="shrink-0" />
                 <span className="font-display text-xl leading-none">Nvoicely</span>
