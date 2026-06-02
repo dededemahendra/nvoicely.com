@@ -158,7 +158,7 @@ function InvoiceDetailPage() {
           {/* Totals */}
           <div className="flex justify-end">
             <Card className="w-full shadow-none sm:max-w-xs dark:ring-0">
-              <CardContent className="space-y-3 p-5 text-sm">
+              <CardContent className="space-y-3 p-6 md:pt-6 text-sm">
                 <Row label="Subtotal" value={formatCurrency(invoice.subtotal, invoice.currency)} />
                 <Row label="Tax" value={formatCurrency(invoice.tax_amount, invoice.currency)} />
                 {(invoice.discount_amount ?? 0) > 0 && (

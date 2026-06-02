@@ -1,8 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Send } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Send, ArrowLeft } from "lucide-react";
 import { PageHeader } from "~/components/shared/PageHeader";
 import { InvoiceForm } from "~/components/invoice/InvoiceForm";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { ConfirmDialog } from "~/components/shared/ConfirmDialog";
 import { useInvoice, useUpdateInvoice, useSendInvoice } from "~/hooks/useInvoices";
 import { useClients } from "~/hooks/useClients";
@@ -37,19 +39,29 @@ function EditInvoicePage() {
     );
   }
 
-  if (loadingInvoice || loadingClients) return <Skeleton className="h-96 w-full" />;
-  if (!invoice) return <p>Invoice not found</p>;
+  if (loadingInvoice || loadingClients) return <EditSkeleton />;
+  if (!invoice) return <p className="text-sm text-muted-foreground">Invoice not found.</p>;
 
   return (
     <div className="space-y-6">
+      <Link
+        to="/invoices/$id"
+        params={{ id }}
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to invoice
+      </Link>
+
       <PageHeader
         title={`Edit ${invoice.invoice_number}`}
+        description="Update the invoice details below."
         action={
           recipient?.email ? (
             <ConfirmDialog
               trigger={
                 <Button disabled={sendInvoice.isPending}>
-                  <Send className="h-4 w-4 mr-2" />
+                  {sendInvoice.isPending ? <Spinner /> : <Send className="h-4 w-4" />}
                   {sendInvoice.isPending ? "Sending..." : "Send to client"}
                 </Button>
               }
@@ -75,6 +87,30 @@ function EditInvoicePage() {
         onSubmit={handleSubmit}
         isSubmitting={updateInvoice.isPending}
       />
+    </div>
+  );
+}
+
+function EditSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-9 w-64" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Card key={i} className="shadow-none dark:ring-0">
+          <CardHeader>
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, f) => (
+              <div key={f} className="space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-11 w-full" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

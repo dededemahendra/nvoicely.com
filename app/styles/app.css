@@ -1,52 +1,125 @@
-@import "tailwindcss";
-
-/* Premium Ledger — fintech-inspired warm cream + forest green system */
+/* Premium Ledger — warm cream + forest green, with a dark variant */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
+/* Map Tailwind color utilities to CSS vars so .dark can override them. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
 @theme {
-  /* Base surfaces — warm cream paper, not cold white */
-  --color-background: #f8f6f1;
-  --color-foreground: #1a1f1c;
-  --color-card: #ffffff;
-  --color-card-foreground: #1a1f1c;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #1a1f1c;
-
-  /* Brand — deep forest green */
-  --color-primary: #1c3d2f;
-  --color-primary-foreground: #f4ede0;
-
-  /* Sidebar surface — even darker, almost black-green */
-  --color-sidebar: #142620;
-  --color-sidebar-foreground: #d8d0bd;
-  --color-sidebar-accent: #1f3a30;
-  --color-sidebar-accent-foreground: #d8d0bd;
-  --color-sidebar-border: #1f3128;
-  --color-sidebar-primary: #1c3d2f;
-  --color-sidebar-primary-foreground: #f4ede0;
-  --color-sidebar-ring: #1c3d2f;
-
-  --color-secondary: #efece4;
-  --color-secondary-foreground: #1c3d2f;
-  --color-muted: #efece4;
-  --color-muted-foreground: #6b6a62;
-  --color-accent: #e6ede8;
-  --color-accent-foreground: #1c3d2f;
-  --color-destructive: #b3261e;
-  --color-destructive-foreground: #f8f6f1;
-  --color-success: #1c5e3f;
-  --color-success-foreground: #e8f1ea;
-  --color-border: #e2ddd1;
-  --color-input: #d8d3c5;
-  --color-ring: #1c3d2f;
   --radius: 0.5rem;
-
-  /* Typography — Inter only */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: #f8f6f1;
+  --foreground: #1a1f1c;
+  --card: #ffffff;
+  --card-foreground: #1a1f1c;
+  --popover: #ffffff;
+  --popover-foreground: #1a1f1c;
+  --primary: #1c3d2f;
+  --primary-foreground: #f4ede0;
+  --secondary: #efece4;
+  --secondary-foreground: #1c3d2f;
+  --muted: #efece4;
+  --muted-foreground: #6b6a62;
+  --accent: #e6ede8;
+  --accent-foreground: #1c3d2f;
+  --destructive: #b3261e;
+  --destructive-foreground: #f8f6f1;
+  --success: #1c5e3f;
+  --success-foreground: #e8f1ea;
+  --border: #e2ddd1;
+  --input: #d8d3c5;
+  --ring: #1c3d2f;
+
+  --sidebar: #f4f1ea;
+  --sidebar-foreground: #1a1f1c;
+  --sidebar-accent: #e6ede8;
+  --sidebar-accent-foreground: #1c3d2f;
+  --sidebar-border: #e2ddd1;
+  --sidebar-primary: #1c3d2f;
+  --sidebar-primary-foreground: #f4ede0;
+  --sidebar-ring: #1c3d2f;
+
+  --chart-1: #1c3d2f;
+  --chart-2: #4a7a5f;
+  --chart-3: #c9a227;
+  --chart-4: #8aa39a;
+  --chart-5: #b3613a;
+}
+
+.dark {
+  --background: #14130f;
+  --foreground: #ecebe3;
+  --card: #1c1b16;
+  --card-foreground: #ecebe3;
+  --popover: #1c1b16;
+  --popover-foreground: #ecebe3;
+  --primary: #356b52;
+  --primary-foreground: #f4ede0;
+  --secondary: #26241d;
+  --secondary-foreground: #d7e0d8;
+  --muted: #211f19;
+  --muted-foreground: #9c988c;
+  --accent: #232a24;
+  --accent-foreground: #e6ede8;
+  --destructive: #e5484d;
+  --destructive-foreground: #f7eceb;
+  --success: #54c08a;
+  --success-foreground: #06140d;
+  --border: #2c2a22;
+  --input: #353229;
+  --ring: #4d8268;
+
+  --sidebar: #161510;
+  --sidebar-foreground: #cfd2c8;
+  --sidebar-accent: #232218;
+  --sidebar-accent-foreground: #ecebe3;
+  --sidebar-border: #2a2820;
+  --sidebar-primary: #356b52;
+  --sidebar-primary-foreground: #f4ede0;
+  --sidebar-ring: #4d8268;
+
+  --chart-1: #6fae8a;
+  --chart-2: #8fc7a8;
+  --chart-3: #d9b441;
+  --chart-4: #9fb6ac;
+  --chart-5: #d4794f;
 }
 
 @layer base {
@@ -63,13 +136,11 @@
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
-  /* Headline serif — applied via class */
   .font-display {
     font-family: var(--font-serif);
     font-weight: 600;
     letter-spacing: -0.02em;
   }
-  /* Numbers everywhere */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
@@ -79,24 +150,4 @@
   .page {
     @apply mx-auto w-full max-w-6xl px-4 md:px-8;
   }
-  /* Subtle paper grain for the background — used on body via ::before */
-  .grain::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.035;
-    z-index: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-}
-
-/* Chart palette — Premium Ledger earthy tones, consumed by ChartConfig
-   (var(--chart-N)) in the dashboard chart widgets. */
-:root {
-  --chart-1: #1c3d2f;
-  --chart-2: #4a7a5f;
-  --chart-3: #c9a227;
-  --chart-4: #8aa39a;
-  --chart-5: #b3613a;
 }

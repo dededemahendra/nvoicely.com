@@ -10,9 +10,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    // @react-pdf/renderer v4 uses yoga-wasm internally — Vite's pre-bundler
-    // can't handle WASM modules, so we exclude it and let it load natively.
-    exclude: ["@react-pdf/renderer"],
+    // Pre-bundle react-pdf so esbuild converts it and its CJS deps (base64-js,
+    // etc.) to proper ESM — excluding it broke the default-export interop.
+    include: ["@react-pdf/renderer"],
   },
   plugins: [
     tailwindcss(),
