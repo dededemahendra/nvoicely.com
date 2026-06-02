@@ -1,5 +1,5 @@
 import { account } from "~/lib/appwrite";
-import { OAuthProvider } from "appwrite";
+import { ID, OAuthProvider } from "appwrite";
 
 export async function getCurrentUser() {
   try {
@@ -9,29 +9,51 @@ export async function getCurrentUser() {
   }
 }
 
-export async function login(email: string, password: string) {
-  // Clear any stale session before creating a new one — Appwrite rejects
-  // createEmailPasswordSession when a session is already active.
+async function clearStaleSession() {
+  // Appwrite rejects creating a session when one is already active.
   try {
     await account.deleteSession("current");
   } catch {
     // no active session, ignore
   }
-  return await account.createEmailPasswordSession(email, password);
 }
 
-export async function register(email: string, password: string, name: string) {
-  await account.create("unique()", email, password, name);
-  return await login(email, password);
+// ----- Passwordless: email code (OTP) -----
+// Creates the user if they don't exist yet; returns the userId needed to verify.
+export async function sendEmailCode(email: string): Promise<string> {
+  const token = await account.createEmailToken(ID.unique(), email);
+  return token.userId;
+}
+
+export async function verifyEmailCode(userId: string, code: string) {
+  await clearStaleSession();
+  return account.createSession(userId, code);
+}
+
+// ----- Passwordless: magic link -----
+export async function sendMagicLink(email: string) {
+  const url = `${window.location.origin}/auth/verify`;
+  await account.createMagicURLToken(ID.unique(), email, url);
+}
+
+// Used by the magic-link callback route.
+export async function createSessionFromToken(userId: string, secret: string) {
+  await clearStaleSession();
+  return account.createSession(userId, secret);
+}
+
+// ----- Password (secondary) -----
+export async function login(email: string, password: string) {
+  await clearStaleSession();
+  return account.createEmailPasswordSession(email, password);
 }
 
 export async function logout() {
-  return await account.deleteSession("current");
+  return account.deleteSession("current");
 }
 
-// Redirects the browser to Google. Requires the Google OAuth provider to be
-// enabled in the Appwrite console; otherwise Appwrite redirects to the failure
-// URL (/login) without creating a session.
+// ----- Google OAuth -----
+// Requires the Google provider enabled in the Appwrite console.
 export function loginWithGoogle() {
   const origin = window.location.origin;
   account.createOAuth2Session(OAuthProvider.Google, `${origin}/`, `${origin}/login`);
