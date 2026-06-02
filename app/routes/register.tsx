@@ -36,7 +36,7 @@ function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Get started with Ledger"
+      subtitle="Get started with Nvoicely"
       footer={
         <>
           Have an account?{" "}
